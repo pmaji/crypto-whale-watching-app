@@ -31,8 +31,8 @@ ask_tbl = ask_tbl[(ask_tbl['price'] <= ten_perc_above_first_ask)]
 bid_tbl['price']=pd.to_numeric(bid_tbl['price'])
 bid_tbl['volume']=pd.to_numeric(bid_tbl['volume'])
 first_bid = float(bid_tbl.iloc[1,0])
-ten_perc_above_first_bid = (0.9 * first_bid)
-bid_tbl = bid_tbl[(bid_tbl['price'] >= ten_perc_above_first_bid)]
+ten_perc_below_first_bid = (0.9 * first_bid)
+bid_tbl = bid_tbl[(bid_tbl['price'] >= ten_perc_below_first_bid)]
 
 
 # actual app layout below
