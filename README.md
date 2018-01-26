@@ -1,10 +1,9 @@
 # eth_python_tracker
-Python-based Dash app meant to track Whale activity in buy / sell walls on GDAX.
+Welcome! This is a python-based Dash app meant to track Whale activity in buy / sell walls on GDAX. It is set to update every 10 seconds but this can be changed easily in the code if you want to make the refreshes faster / slower. 
 
-This is my first Python / Dash app. ETH donations appreciated: '0x966796A6334EA1302d9Edb03072dB55241145401'
+Anyone interested with Python installed on their computer can download this and run it locally, just check to be sure you have the few required modules installed.
 
-Presently, there are 2 issues for which I am seeking solutions (and would appreciate advice):
+A screenshot of what it should look like when running is included. Buys / sells are color-coded, and the size of each observation is deteremined by the square root of the volume of that particular order. 
 
-1 - automating the data pull so that it doens't require manual refresh.
+This is my first Python / Dash app, and I hope it is of use to many of you! I may publish it online in the future, but presently it is computationally easiest to run your own local version. ETH donations appreciated: '0x966796A6334EA1302d9Edb03072dB55241145401'
 
-2 - hosting this publicly so that the wonderful ETH community can use it! (I don't have experience publishing Dash apps, so any advice would be great.) 
