@@ -1,5 +1,5 @@
 # eth_python_tracker
-Welcome! This is a Python-based Dash app meant to track Whale activity in buy / sell walls on GDAX. It is set to update every 10 seconds but this can be changed easily in the code if you want to make the refreshes faster / slower. 
+Welcome! This is a Python-based Dash app meant to track whale activity in buy / sell walls on GDAX. Thanks to a recent update (curtesy of great community feedback and guest contributions), we now have an ETH/BTC ratio whale watching view as well as the main ETH/USD view. It is set to update every 10 seconds but this can be changed easily in the code if you want to make the refreshes faster / slower. 
 
 The idea for this app came to me while looking at buy and sell walls on GDAX. While you can see large walls, you cannot see how much of these are due to individuals vs. group clustering. This difference is quite important, as it impacts how quickly walls can be pulled, etc., so having buy / sell-wall information at the Ethereum address level can prove quite valuable for traders. This simple app allows you to access just that information, by focusing on individual limit orders that constitute large walls, and particularly emphasizing the largest orders. Also, I filter out all orders less than 1 ETH in size.
 
