@@ -14,7 +14,6 @@ import numpy as np
 
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
-
 # function to get data from GDAX to be referenced in our call-back later
 def get_data():
     order_book = public_client.get_product_order_book('ETH-USD', level=3)
@@ -39,6 +38,9 @@ def get_data():
     bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
     bid_tbl['color'] = 'green'
 
+    # flip the bid table
+    bid_tbl = bid_tbl.iloc[::-1]
+
     # append the buy and sell side tables to create one cohesive view
     fulltbl = bid_tbl.append(ask_tbl)
     # limit our view to only orders greater than or equal to 1 ETH in size
@@ -46,10 +48,25 @@ def get_data():
 
     # takes the square root of the volume (to be used later on for the purpose of sizing the orders
     fulltbl['sqrt'] = np.sqrt(fulltbl['volume'])
-    # takes average of closet bid and ask to determine the market price
-    fulltbl['market_price'] = ((perc_above_first_ask + perc_above_first_bid) / 2)
 
-    return fulltbl
+    final_tbl = fulltbl.groupby(['price'])[['volume']].sum()
+    final_tbl['n_unique_orders'] = fulltbl.groupby('price').address.nunique().astype(float)
+    final_tbl['price'] = final_tbl.index
+    final_tbl['sqrt'] = np.sqrt(final_tbl['volume'])
+    # making the tooltip
+    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " ETH available for $" + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " ETH addresses")
+
+    # get market price
+    mp = public_client.get_product_ticker(product_id='ETH-USD')
+    final_tbl['market price'] = mp['price']
+
+    # makes the type float so that the next logical comparison can take place
+    final_tbl['market price'] = final_tbl['market price'].astype(float)
+
+    # determine buys / sells relative to last market price
+    final_tbl['color'] = np.where(final_tbl['price'] > final_tbl['market price'], 'red', 'green')
+
+    return final_tbl
 
 
 ######ETH-BTC#######
@@ -76,6 +93,9 @@ def get_data_ethbtc():
     bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
     bid_tbl['color'] = 'green'
 
+    # flip the bid table
+    bid_tbl = bid_tbl.iloc[::-1]
+
     # append the buy and sell side tables to create one cohesive view
     fulltbl = bid_tbl.append(ask_tbl)
     # limit our view to only orders greater than or equal to 1 ETH in size
@@ -83,10 +103,26 @@ def get_data_ethbtc():
 
     # takes the square root of the volume (to be used later on for the purpose of sizing the orders
     fulltbl['sqrt'] = np.sqrt(fulltbl['volume'])
-    # takes average of closet bid and ask to determine the market price
-    fulltbl['market_price'] = ((perc_above_first_ask + perc_above_first_bid) / 2)
 
-    return fulltbl
+    final_tbl = fulltbl.groupby(['price'])[['volume']].sum()
+    final_tbl['n_unique_orders'] = fulltbl.groupby('price').address.nunique().astype(float)
+    final_tbl['price'] = final_tbl.index
+    final_tbl['sqrt'] = np.sqrt(final_tbl['volume'])
+    # making the tooltip
+    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " ETH available for " + final_tbl['price'].map(
+        str) + " BTC being offered by " + final_tbl['n_unique_orders'].map(str) + " ETH addresses")
+
+    # get market price
+    mp = public_client.get_product_ticker(product_id='ETH-BTC')
+    final_tbl['market price'] = mp['price']
+
+    # makes the type float so that the next logical comparison can take place
+    final_tbl['market price'] = final_tbl['market price'].astype(float)
+
+    # determine buys / sells relative to last market price
+    final_tbl['color'] = np.where(final_tbl['price'] > final_tbl['market price'], 'red', 'green')
+
+    return final_tbl
 
 
 # begin building the dash itself
@@ -117,7 +153,9 @@ def update_graph():
                 x=result['volume'],
                 y=result['price'],
                 mode='markers',
+                text= result['text'],
                 opacity=0.7,
+                hoverinfo='text',
                 marker={
                     'size': result['sqrt'],
                     'line': {'width': 0.5, 'color': 'white'},
@@ -128,7 +166,7 @@ def update_graph():
         ],
         'layout': go.Layout(
             # makes it so that title automatically updates with refreshed market price as well
-            title=("The present market price of ETH is: $" + str(result['price'].iloc[0])),
+            title=("The present market price of ETH is: $" + str(result['market price'].iloc[0])),
             xaxis={'title': 'Order Size'},
             yaxis={'title': 'ETH Price'},
             hovermode='closest'
@@ -147,18 +185,20 @@ def update_graph_ethbtc():
                 x=result['volume'],
                 y=result['price'],
                 mode='markers',
+                text=result['text'],
                 opacity=0.7,
+                hoverinfo='text',
                 marker={
                     'size': result['sqrt'],
                     'line': {'width': 0.5, 'color': 'white'},
-                    'color': result['color']  # set color equal to variable
+                    'color': result['color']
                 },
 
             )
         ],
         'layout': go.Layout(
             # makes it so that title automatically updates with refreshed market price as well
-            title=("The present market price of ETHBTC is: $" + str(result['price'].iloc[0])),
+            title=("The present market price of ETHBTC is: $" + str(result['market price'].iloc[0])),
             xaxis={'title': 'Order Size'},
             yaxis={'title': 'ETHBTC Price'},
             hovermode='closest'
