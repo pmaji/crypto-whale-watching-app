@@ -127,7 +127,7 @@ app.layout = html.Div([
     ),
     dcc.Interval(
         id='interval-component',
-        interval=1 * 10000  # in milliseconds for the automatic refresh
+        interval=1 * 2000  # in milliseconds for the automatic refresh
     )
 ])
 
