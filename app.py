@@ -130,6 +130,10 @@ def get_data_ethbtc():
 app = dash.Dash()
 
 app.layout = html.Div([
+    html.H2('WHALE WATCHING APP (support / donations appreciated)'),
+    html.H3('BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'),
+    html.H3('ETH Address: 0x2A817af4F3e562BC3BB7E20e19b5d32E65DC7227'),
+    html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
     dcc.Graph(
         id='live-graph',
     ),
