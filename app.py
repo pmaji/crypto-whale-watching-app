@@ -13,6 +13,15 @@ import pandas as pd
 import gdax
 import numpy as np
 
+import time
+import threading
+from queue import Queue
+
+tables = {}
+
+def get_data_cache(ticker):
+    return tables[ticker]
+
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
 # function to get data from GDAX to be referenced in our call-back later
@@ -81,8 +90,19 @@ def get_data(ticker, threshold=1.0):
     # determine buys / sells relative to last market price
     final_tbl['color'] = np.where(final_tbl['price'] > final_tbl['market price'], 'red', 'green')
 
-    return final_tbl
+    tables[ticker] = final_tbl
+    return tables[ticker]
 
+def refreshWorker():
+    while True:
+        refreshTickers()
+        time.sleep(5)
+
+def refreshTickers():
+    get_data("ETH-USD")
+    get_data("ETH-BTC")
+    get_data("BTC-USD")
+    get_data("LTC-USD")
 
 
 # begin building the dash itself
@@ -113,7 +133,7 @@ app.layout = html.Div([
 
 
 def update_data(ticker, threshold=1.0):
-    data = get_data(ticker, threshold)
+    data = get_data_cache(ticker)
     result = {
         'data': [
             go.Scatter(
@@ -171,4 +191,9 @@ def update_ltc_usd():
 
 
 if __name__ == '__main__':
+    refreshTickers()
+    t = threading.Thread(target=refreshWorker)
+    t.daemon = True
+    t.start()
+
     app.run_server(host='0.0.0.0')
