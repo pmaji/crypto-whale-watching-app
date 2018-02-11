@@ -1,3 +1,4 @@
+# Don't forget, if you find this useful please send ETH donations to: 0xc8a12868f79A5d77530E91247FEC84497890e572
 # modules
 
 # dash-related for app itself
