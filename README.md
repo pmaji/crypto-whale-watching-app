@@ -7,5 +7,5 @@ Anyone interested with Python installed on their computer can download this and 
 
 A screenshot of what it should look like when running is included. Buys / sells are color-coded, and the size of each observation is deteremined by the square root of the volume of that particular order. 
 
-This is my first Python / Dash app, and I hope it is of use to many of you! I may publish it online in the future, but presently it is computationally easiest to run your own local version. ETH donations appreciated: '0xA4943baFB08BDB8D6f908be6B099d556f78Fc90C'
+This is my first Python / Dash app, and I hope it is of use to many of you! I may publish it online in the future, but presently it is computationally easiest to run your own local version. ETH donations appreciated: '0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49'
 
