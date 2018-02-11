@@ -9,7 +9,7 @@ A screenshot of what it should look like when running is included. Buys / sells 
 
 This is my first Python / Dash app, and I hope it is of use to many of you! I may publish it online in the future, but presently it is computationally easiest to run your own local version. Currently this is best hosted locally, but if I can raise enough via donations (see below) I'd like to migrate this to a paid AWS host. Thanks for reading!
 
-ETH donations address: 0xc8a12868f79A5d77530E91247FEC84497890e572
+ETH donations address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49
 
 BTC donations address: 1M2fFerihy68gVJ5gvB7yrnwBbzEPhCbZ2
 

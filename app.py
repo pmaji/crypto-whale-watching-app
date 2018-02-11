@@ -1,7 +1,7 @@
-# Don't forget, if you find this useful please send ETH donations to: 0xc8a12868f79A5d77530E91247FEC84497890e572
+# Don't forget, if you find this useful please send ETH donations to: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49
 # modules
 
-# dash-related for app itself
+# dash-related libraries for app itself
 import dash
 from dash.dependencies import Output, Event
 import dash_core_components as dcc
@@ -89,18 +89,21 @@ def get_data(ticker):
 app = dash.Dash()
 
 app.layout = html.Div([
-    html.H2('WHALE WATCHING APP (support / donations appreciated)'),
+    html.H2('CRYPTO WHALE WATCHING APP (support / donations appreciated)'),
+    html.H3('ETH Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49'),
     html.H3('BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'),
-    html.H3('ETH Address: 0x2A817af4F3e562BC3BB7E20e19b5d32E65DC7227'),
     html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
     dcc.Graph(
-        id='live-graph',
+        id='live-graph-ethusd',
     ),
     dcc.Graph(
         id='live-graph-ethbtc',
     ),
     dcc.Graph(
         id='live-graph-btcusd',
+    ),
+    dcc.Graph(
+        id='live-graph-ltcusd',
     ),
     dcc.Interval(
         id='interval-component',
@@ -139,7 +142,7 @@ def update_data(ticker):
     return result
 
 # links up the chart creation to the interval for an auto-refresh
-@app.callback(Output('live-graph', 'figure'),
+@app.callback(Output('live-graph-ethusd', 'figure'),
               events=[Event('interval-component', 'interval')])
 def update_eth_usd():
     return update_data("ETH-USD")
@@ -156,6 +159,18 @@ def update_btc_usd():
               events=[Event('interval-component', 'interval')])
 def update_eth_btc():
     return update_data("ETH-BTC")
+
+# BTCUSD #
+@app.callback(Output('live-graph-btcusd', 'figure'),
+              events=[Event('interval-component', 'interval')])
+def update_eth_btc():
+    return update_data("BTC-USD")
+
+# LTCUSD #
+@app.callback(Output('live-graph-ltcusd', 'figure'),
+              events=[Event('interval-component', 'interval')])
+def update_eth_btc():
+    return update_data("LTC-USD")
 
 
 if __name__ == '__main__':
