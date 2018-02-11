@@ -16,7 +16,7 @@ import numpy as np
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
 # function to get data from GDAX to be referenced in our call-back later
-def get_data(ticker):
+def get_data(ticker, threshold=1.0):
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -58,8 +58,8 @@ def get_data(ticker):
 
     # append the buy and sell side tables to create one cohesive view
     fulltbl = bid_tbl.append(ask_tbl)
-    # limit our view to only orders greater than or equal to 1 ETH in size
-    fulltbl = fulltbl[(fulltbl['volume'] >= 1)]
+    # limit our view to only orders greater than or equal to the threshold defined
+    fulltbl = fulltbl[(fulltbl['volume'] >= threshold)]
 
     # takes the square root of the volume (to be used later on for the purpose of sizing the orders
     fulltbl['sqrt'] = np.sqrt(fulltbl['volume'])
@@ -112,8 +112,8 @@ app.layout = html.Div([
 ])
 
 
-def update_data(ticker):
-    data = get_data(ticker)
+def update_data(ticker, threshold=1.0):
+    data = get_data(ticker, threshold)
     result = {
         'data': [
             go.Scatter(
@@ -142,19 +142,13 @@ def update_data(ticker):
     return result
 
 # links up the chart creation to the interval for an auto-refresh
+# ETHUSD #
 @app.callback(Output('live-graph-ethusd', 'figure'),
               events=[Event('interval-component', 'interval')])
 def update_eth_usd():
     return update_data("ETH-USD")
 
-# links up the chart creation to the interval for an auto-refresh
-@app.callback(Output('live-graph-btcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_btc_usd():
-    return update_data("BTC-USD")
-
-
-# BTCETH#
+# ETHBTC #
 @app.callback(Output('live-graph-ethbtc', 'figure'),
               events=[Event('interval-component', 'interval')])
 def update_eth_btc():
@@ -163,13 +157,13 @@ def update_eth_btc():
 # BTCUSD #
 @app.callback(Output('live-graph-btcusd', 'figure'),
               events=[Event('interval-component', 'interval')])
-def update_eth_btc():
-    return update_data("BTC-USD")
+def update_btc_usd():
+    return update_data("BTC-USD", threshold=0.25)
 
 # LTCUSD #
 @app.callback(Output('live-graph-ltcusd', 'figure'),
               events=[Event('interval-component', 'interval')])
-def update_eth_btc():
+def update_ltc_usd():
     return update_data("LTC-USD")
 
 
