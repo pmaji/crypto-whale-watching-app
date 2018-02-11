@@ -148,10 +148,6 @@ def update_eth_usd():
     return update_data("ETH-USD")
 
 # links up the chart creation to the interval for an auto-refresh
-@app.callback(Output('live-graph-btcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_btc_usd():
-    return update_data("BTC-USD")
 
 
 # BTCETH#
