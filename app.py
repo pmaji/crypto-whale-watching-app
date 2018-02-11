@@ -17,6 +17,20 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 
 # function to get data from GDAX to be referenced in our call-back later
 def get_data(ticker):
+    # Determine what currencies we're working with to make the tool tip more dynamic.
+    currency = ticker.split("-")[0]
+    base_currency = ticker.split("-")[1]
+    if base_currency.upper() == "USD":
+        symbol = "$"
+    elif base_currency.upper() == "BTC":
+        symbol = "₿"
+    elif base_currency.upper() == "EUR":
+        symbol = "€"
+    elif base_currency.upper() == "GBP":
+        symbol = "£"
+    else:
+        symbol = ""
+
     order_book = public_client.get_product_order_book(ticker, level=3)
     ask_tbl = pd.DataFrame(data=order_book['asks'], columns=['price', 'volume', 'address'])
     bid_tbl = pd.DataFrame(data=order_book['bids'], columns=['price', 'volume', 'address'])
@@ -55,7 +69,7 @@ def get_data(ticker):
     final_tbl['price'] = final_tbl.index
     final_tbl['sqrt'] = np.sqrt(final_tbl['volume'])
     # making the tooltip
-    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " ETH available for $" + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " ETH addresses")
+    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " " + currency + " available for " + symbol + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " ETH addresses")
 
     # get market price
     mp = public_client.get_product_ticker(product_id=ticker)
@@ -84,6 +98,9 @@ app.layout = html.Div([
     ),
     dcc.Graph(
         id='live-graph-ethbtc',
+    ),
+    dcc.Graph(
+        id='live-graph-btcusd',
     ),
     dcc.Interval(
         id='interval-component',
@@ -126,6 +143,12 @@ def update_data(ticker):
               events=[Event('interval-component', 'interval')])
 def update_eth_usd():
     return update_data("ETH-USD")
+
+# links up the chart creation to the interval for an auto-refresh
+@app.callback(Output('live-graph-btcusd', 'figure'),
+              events=[Event('interval-component', 'interval')])
+def update_btc_usd():
+    return update_data("BTC-USD")
 
 
 # BTCETH#
