@@ -148,7 +148,10 @@ def update_data(ticker, threshold=1.0):
 def update_eth_usd():
     return update_data("ETH-USD")
 
+
 # ETHBTC #
+# links up the chart creation to the interval for an auto-refresh
+
 @app.callback(Output('live-graph-ethbtc', 'figure'),
               events=[Event('interval-component', 'interval')])
 def update_eth_btc():
