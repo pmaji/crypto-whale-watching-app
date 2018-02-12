@@ -78,7 +78,7 @@ def get_data(ticker, threshold=1.0):
     final_tbl['price'] = final_tbl.index
     final_tbl['sqrt'] = np.sqrt(final_tbl['volume'])
     # making the tooltip
-    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " " + currency + " available for " + symbol + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " " + currency + " addresses")
+    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " " + currency + " available for " + symbol + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " " + currency + " orders")
 
     # get market price
     mp = public_client.get_product_ticker(product_id=ticker)
