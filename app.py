@@ -131,7 +131,8 @@ app.layout = html.Div([
     html.H3('ETH Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49' + ' -------------------- '
             'BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'),
     html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
-    html.H3('Legend: Bright colored mark = order size of 5. Hover over bubbles for more info.'),
+    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
+            'Hover over bubbles for more info.'),
     dcc.Graph(
         id='live-graph-ethusd',
     ),
