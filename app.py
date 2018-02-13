@@ -19,6 +19,8 @@ import threading
 from queue import Queue
 
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
+TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD")
+GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 tables = {}
 
 # creates a cache to speed up load time and facilitate refreshes
@@ -107,11 +109,10 @@ def refreshWorker():
         refreshTickers()
         time.sleep(5)
 
+
 def refreshTickers():
-    get_data("ETH-USD")
-    get_data("ETH-BTC")
-    get_data("BTC-USD")
-    get_data("LTC-USD")
+    for ticker in TICKERS:
+        get_data(ticker)
 
 
 # begin building the dash itself
@@ -125,18 +126,10 @@ app.layout = html.Div([
     html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
     html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
             'Hover over bubbles for more info.'),
-    dcc.Graph(
-        id='live-graph-ethusd',
-    ),
-    dcc.Graph(
-        id='live-graph-ethbtc',
-    ),
-    dcc.Graph(
-        id='live-graph-btcusd',
-    ),
-    dcc.Graph(
-        id='live-graph-ltcusd',
-    ),
+    dcc.Graph(id=GRAPH_ID[0]),
+    dcc.Graph(id=GRAPH_ID[1]),
+    dcc.Graph(id=GRAPH_ID[2]),
+    dcc.Graph(id=GRAPH_ID[3]),
     dcc.Interval(
         id='interval-component',
         interval=1 * 4000  # in milliseconds for the automatic refresh; refreshes every 2 seconds
