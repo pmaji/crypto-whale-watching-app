@@ -18,6 +18,7 @@ import time
 import threading
 from queue import Queue
 
+tables = {"troll_mode":"true"}
 tables = {}
 
 # creates a cache to speed up load time and facilitate refreshes
