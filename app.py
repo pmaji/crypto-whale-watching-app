@@ -18,6 +18,7 @@ import time
 import threading
 from queue import Queue
 
+SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 tables = {}
 
 # creates a cache to speed up load time and facilitate refreshes
@@ -32,16 +33,7 @@ def get_data(ticker, threshold=1.0):
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
-    if base_currency.upper() == "USD":
-        symbol = "$"
-    elif base_currency.upper() == "BTC":
-        symbol = "₿"
-    elif base_currency.upper() == "EUR":
-        symbol = "€"
-    elif base_currency.upper() == "GBP":
-        symbol = "£"
-    else:
-        symbol = ""
+    symbol = SYMBOLS.get(base_currency.upper(), "")
 
     # pulls in the order book data from GDAX; split by ask vs bid
     order_book = public_client.get_product_order_book(ticker, level=3)
