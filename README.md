@@ -13,6 +13,8 @@ This is my first Python / Dash app, and I hope it is of use to many of you! Leav
 
 **BTC donations address: 1M2fFerihy68gVJ5gvB7yrnwBbzEPhCbZ2**
 
+**LTC donations address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM**
+
 Presently, you can access the app at the links below:
 
 http://whales.cracklord.com/
