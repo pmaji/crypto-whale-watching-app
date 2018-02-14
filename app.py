@@ -126,10 +126,10 @@ app.layout = html.Div([
     html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
     html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
             'Hover over bubbles for more info.'),
-    dcc.Graph(id=GRAPH_ID[0]),
-    dcc.Graph(id=GRAPH_ID[1]),
-    dcc.Graph(id=GRAPH_ID[2]),
-    dcc.Graph(id=GRAPH_ID[3]),
+    dcc.Graph(id=GRAPH_IDS[0]),
+    dcc.Graph(id=GRAPH_IDS[1]),
+    dcc.Graph(id=GRAPH_IDS[2]),
+    dcc.Graph(id=GRAPH_IDS[3]),
     dcc.Interval(
         id='interval-component',
         interval=1 * 4000  # in milliseconds for the automatic refresh; refreshes every 2 seconds
@@ -205,4 +205,4 @@ if __name__ == '__main__':
     t.daemon = True
     t.start()
 
-    app.run_server(host='0.0.0.0')
+app.run_server(host='0.0.0.0')
