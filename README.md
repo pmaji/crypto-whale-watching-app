@@ -19,5 +19,4 @@ Presently, you can access the app at the links below:
 
 http://whales.cracklord.com/
 
-http://ac.com.au:8050/
 
