@@ -4,7 +4,7 @@
 
 # dash-related libraries for app itself
 import dash
-from dash.dependencies import Output, Event
+from dash.dependencies import Output, Event, Input
 import dash_core_components as dcc
 import dash_html_components as html
 
