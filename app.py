@@ -173,28 +173,26 @@ for graph in GRAPH_IDS:
     @app.callback(Output(graph, 'figure'),
               events=[Event('interval-component', 'interval')])
 
-# ETHUSD #
-def update_eth_usd():
-    return update_data("ETH-USD")
+    def update_eth_usd():
+        return update_data("ETH-USD")
 
 # ETHBTC #
-def update_eth_btc():
-    return update_data("ETH-BTC")
+    def update_eth_btc():
+        return update_data("ETH-BTC")
 
 # BTCUSD #
 # threshold changed for BTC given higher raw price
-def update_btc_usd():
-    return update_data("BTC-USD", threshold=0.25)
+    def update_btc_usd():
+        return update_data("BTC-USD", threshold=0.25)
 
 # LTCUSD #
-def update_ltc_usd():
-    return update_data("LTC-USD")
+    def update_ltc_usd():
+        return update_data("LTC-USD")
 
+    if __name__ == '__main__':
+        refreshTickers()
+        t = threading.Thread(target=refreshWorker)
+        t.daemon = True
+        t.start()
 
-if __name__ == '__main__':
-    refreshTickers()
-    t = threading.Thread(target=refreshWorker)
-    t.daemon = True
-    t.start()
-
-app.run_server(host='0.0.0.0')
+    app.run_server(host='0.0.0.0')
