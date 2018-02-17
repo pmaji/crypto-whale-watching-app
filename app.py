@@ -125,7 +125,7 @@ app.layout = html.Div([
     html.H2('CRYPTO WHALE WATCHING APP (support / donations appreciated)'),
     html.H3('ETH Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49' + ' -------------------- '
             'BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'),
-    html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
+    html.H3('<a href="https://github.com/pmaji/eth_python_tracker">GitHub</a>'),
     html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
             'Hover over bubbles for more info.'),
     dcc.Graph(id=GRAPH_IDS[0]),
