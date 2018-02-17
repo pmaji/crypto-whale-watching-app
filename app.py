@@ -30,7 +30,7 @@ def get_data_cache(ticker):
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
 # function to get data from GDAX to be referenced in our call-back later
-def get_data(ticker, threshold=1.0):
+def get_data(ticker, threshold=1.0, uniqueBorder=5):
 
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
@@ -84,17 +84,17 @@ def get_data(ticker, threshold=1.0):
     final_tbl['market price'] = final_tbl['market price'].astype(float)
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
-    # buys are green (if there are 5 or more unique orders at a price, the color is bright, else dark)
-    # sells are red (if there are 5 or more unique orders at a price, the color is bright, else dark)
+    # buys are green (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
+    # sells are red (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
     # color map can be found at : https://matplotlib.org/examples/color/named_colors.html
 
-    final_tbl.loc[((final_tbl['price'] > final_tbl['market price']) & (final_tbl['n_unique_orders'] >= 5)), 'color'] = \
+    final_tbl.loc[((final_tbl['price'] > final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'red'
-    final_tbl.loc[((final_tbl['price'] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < 5)), 'color'] = \
+    final_tbl.loc[((final_tbl['price'] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'darkred'
-    final_tbl.loc[((final_tbl['price'] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] >= 5)), 'color'] = \
+    final_tbl.loc[((final_tbl['price'] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'lime'
-    final_tbl.loc[((final_tbl['price'] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] < 5)), 'color'] = \
+    final_tbl.loc[((final_tbl['price'] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'green'
 
     tables[ticker] = final_tbl
