@@ -129,7 +129,9 @@ div_container = [
             html.P('LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM')
          ]),
     html.H3(html.A("GitHub", href="https://github.com/pmaji/eth_python_tracker")),
-    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info.')
+    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info.'),
+	html.A(html.Button('Freeze all'),href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
+	html.A(html.Button('Un freeze'),href="javascript:location.reload();")
     ]
 for graphId in GRAPH_IDS:
    div_container.append(dcc.Graph(id=graphId))   
