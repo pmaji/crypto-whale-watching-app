@@ -5,6 +5,7 @@
 # dash-related libraries for app itself
 import dash
 from dash.dependencies import Output, Event
+from math import log10, floor
 import dash_core_components as dcc
 import dash_html_components as html
 
@@ -75,6 +76,10 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
     final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
     final_tbl[TBL_PRICE] = final_tbl.index
+    final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args =(3,0,2))
+    final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args =(1,2))
+    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args =(0,))
+    #print(final_tbl)
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     # making the tooltip column for our charts
     final_tbl['text'] = ("There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " " + currency + " orders")
@@ -202,7 +207,15 @@ def update_btc_usd():
 def update_ltc_usd():
     return update_data("LTC-USD")
 
-
+def round_sig(x, sig=3, overwrite=0, minimum=0):
+   if(x==0):
+     return 0.0
+   elif overwrite>0 : return round(x,overwrite)
+   else:
+     digits=-int(floor(log10(abs(x)))) + (sig-1)
+     if digits <= minimum: return round(x,minimum)
+     else: return round(x,digits)
+   
 if __name__ == '__main__':
     refreshTickers()
     t = threading.Thread(target=refreshWorker)
