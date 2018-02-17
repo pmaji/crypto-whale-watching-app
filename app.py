@@ -174,35 +174,19 @@ def update_data(ticker, threshold=1.0):
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 
-# ETHUSD #
-@app.callback(Output('live-graph-ethusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_eth_usd():
-    return update_data("ETH-USD")
+#Function generator
+def create_cb_func():
+    def cb(pGraph):
+        return update_data(pGraph)
+    return cb
 
-
-# ETHBTC #
-@app.callback(Output('live-graph-ethbtc', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_eth_btc():
-    return update_data("ETH-BTC")
-
-
-# BTCUSD #
-# threshold changed for BTC given higher raw price
-@app.callback(Output('live-graph-btcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_btc_usd():
-    return update_data("BTC-USD", threshold=0.25)
-
-
-# LTCUSD #
-@app.callback(Output('live-graph-ltcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_ltc_usd():
-    return update_data("LTC-USD")
-
-
+#Loop through graphs and append callback
+for graph in GRAPH_IDS:
+    cFunc=create_cb_func()
+    @app.callback(Output(graph, 'figure'),
+              events=[Event('interval-component', 'interval')],
+              [Input('pGraph', graph)])(cFunc)
+        
 if __name__ == '__main__':
     refreshTickers()
     t = threading.Thread(target=refreshWorker)
