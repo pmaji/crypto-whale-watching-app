@@ -121,8 +121,9 @@ app = dash.Dash()
 # simple layout that can be improved with better CSS later, but it does the job for now
 app.layout = html.Div([
     html.H2('CRYPTO WHALE WATCHING APP (support / donations appreciated)'),
-    html.H3('ETH Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49' + ' -------------------- '
-            'BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'),
+    html.H3('ETH Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49<br>'
+            'BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo<br>'
+            'LTC donations address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'),
     html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
     html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
             'Hover over bubbles for more info.'),
