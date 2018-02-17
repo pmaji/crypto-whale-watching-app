@@ -19,6 +19,7 @@ import threading
 from queue import Queue
 
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
+THRESHHOLDS= {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
 TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE='price'
@@ -114,7 +115,9 @@ def refreshWorker():
 
 def refreshTickers():
     for ticker in TICKERS:
-        get_data(ticker)
+        currency = ticker.split("-")[0]
+        thresh = THRESHHOLDS.get(currency.upper(),1.0)
+        get_data(ticker, thresh)
 
 
 # begin building the dash itself
