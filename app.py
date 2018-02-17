@@ -175,17 +175,16 @@ def update_data(ticker, threshold=1.0):
 # creates one callback per currency pairing; easy to replicate / add new pairs
 
 #Function generator
-def create_cb_func():
-    def cb(pGraph):
+def create_cb_func(pGraph):
+    def cb():
         return update_data(pGraph)
     return cb
 
 #Loop through graphs and append callback
-for graph in GRAPH_IDS:
-    cFunc=create_cb_func()
-    @app.callback(Output(graph, 'figure'),
-              events=[Event('interval-component', 'interval')],
-              [Input('pGraph', graph)])(cFunc)
+for ticker in TICKERS:
+    graph='live-graph-' + ticker.lower().replace('-', '')
+    app.callback(Output(graph, 'figure'),
+                 events=[Event('interval-component', 'interval')]) (create_cb_func(ticker))
         
 if __name__ == '__main__':
     refreshTickers()
