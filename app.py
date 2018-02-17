@@ -123,19 +123,19 @@ app = dash.Dash()
 # simple layout that can be improved with better CSS later, but it does the job for now
 
 div_container = [
-    html.H2('CRYPTO WHALE WATCHING APP (support / donations appreciated)'),
-    html.H3("Donation will help hosting and developing"),
+    html.H2('CRYPTO WHALE WATCHING APP'),
+    html.H3("Donations greatly appreciated; will go towards hosting / development"),
 	html.P(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
             "BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo", html.Br(),
             "LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM"
          ]),
     html.H3(html.A("GitHub", href="https://github.com/pmaji/eth_python_tracker")),
-    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info.'),
+    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
 	html.A(html.Button('Freeze all'),href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-	html.A(html.Button('Un freeze'),href="javascript:location.reload();")
+	html.A(html.Button('Un-freeze all'),href="javascript:location.reload();")
     ]
 for graphId in GRAPH_IDS:
-   div_container.append(dcc.Graph(id=graphId))   
+   div_container.append(dcc.Graph(id=graphId))
 
 div_container.append(dcc.Interval(
         id='interval-component',
