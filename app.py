@@ -31,7 +31,7 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 
 # function to get data from GDAX to be referenced in our call-back later
 def get_data(ticker, threshold=1.0, uniqueBorder=5):
-
+    ob_points=30 #the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -50,6 +50,16 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
     perc_above_first_ask = (1.025 * first_ask)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl['price'] <= perc_above_first_ask)]
+    dif_ask = perc_above_first_ask - first_bid 
+    ob_step = dif_ask/ob_points 
+    ob_ask = pd.DataFrame(columns=['price', 'volume', 'address'])
+    # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
+    for i in range(1,ob_points):
+        current_border= first_bid+(i*ob_step)
+        current_tbl=bid_tbl[(ask_tbl['price'] >= first_bid) and (ask_tbl['price'] < current_border)]
+        current_volume=current_tbl[['volume']].sum()
+        current_adresses = current_tbl[['address']].sum()
+        ob_ask.loc[i-1] = [current_border,current_volume,current_adresses]
 
     # building subsetted table for bid data only
     # buy side (would be Viridis)
@@ -59,7 +69,17 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
     perc_above_first_bid = (0.975 * first_bid)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
-
+    dif_bid = first_bid - perc_above_first_bid 
+    ob_step = dif_bid/ob_points 
+    ob_bid = pd.DataFrame(columns=['price', 'volume', 'address'])
+    # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
+    for i in range(1,ob_points):
+        current_border= first_bid-(i*ob_step)
+        current_tbl=bid_tbl[(bid_tbl['price'] <= first_bid) and (bid_tbl['price'] > current_border)]
+        current_volume=current_tbl[['volume']].sum()
+        current_adresses = current_tbl[['address']].sum()
+        ob_bid.loc[i-1] = [current_border,current_volume,current_adresses]
+    
     # flip the bid table so that the merged full_tbl is in logical order
     bid_tbl = bid_tbl.iloc[::-1]
     # append the buy and sell side tables to create one cohesive table
