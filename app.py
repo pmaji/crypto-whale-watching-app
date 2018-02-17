@@ -128,7 +128,7 @@ div_container = [
             'Hover over bubbles for more info.'),
     '<input id="Freezer" type="button" value="Freeze Data" onclick="freeze();" />',
     '<script type="text/javascript"> var freezed = false;'
-        'function freeze(){freezed= !freezed; if(freezed){'
+        'function freeze(){freezed= !freezed;var n=(freezed)?"Unfreeze":"Freeze";$("input#Freezer").value=n;if(freezed){'
         'var k = setTimeout(function() {for (var i = k; i > 0; i--) clearInterval(i)},1);}'
         'else{location.reload();}}</script>'
     ]
