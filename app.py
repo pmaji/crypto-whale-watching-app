@@ -124,7 +124,8 @@ app = dash.Dash()
 
 div_container = [
     html.H2('CRYPTO WHALE WATCHING APP (support / donations appreciated)'),
-    html.H3(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
+    html.H3("Donation will help hosting and developing"),
+	html.P(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
             "BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo", html.Br(),
             "LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM"
          ]),
