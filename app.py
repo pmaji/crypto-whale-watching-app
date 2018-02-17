@@ -121,24 +121,27 @@ def refreshTickers():
 app = dash.Dash()
 
 # simple layout that can be improved with better CSS later, but it does the job for now
-# still need to figure out the right way to change the CSS to allow for white space between donation addresses)
-app.layout = html.Div([
+
+div_container = [
     html.H2('CRYPTO WHALE WATCHING APP (support / donations appreciated)'),
-    html.H3('ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49' + '--------' +
-            'BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'), #' -------------------- ' + 'LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'),
-    html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
-    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
-            'Hover over bubbles for more info.'),
-    dcc.Graph(id=GRAPH_IDS[0]),
-    dcc.Graph(id=GRAPH_IDS[1]),
-    dcc.Graph(id=GRAPH_IDS[2]),
-    dcc.Graph(id=GRAPH_IDS[3]),
-    dcc.Interval(
+    html.H3("Donation will help hosting and developing"),
+	html.P(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
+            "BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo", html.Br(),
+            "LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM"
+         ]),
+    html.H3(html.A("GitHub", href="https://github.com/pmaji/eth_python_tracker")),
+    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info.'),
+	html.A(html.Button('Freeze all'),href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
+	html.A(html.Button('Un freeze'),href="javascript:location.reload();")
+    ]
+for graphId in GRAPH_IDS:
+   div_container.append(dcc.Graph(id=graphId))   
+
+div_container.append(dcc.Interval(
         id='interval-component',
         interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
-    )
-])
-
+    ))
+app.layout = html.Div(div_container)
 
 def update_data(ticker, threshold=1.0):
     data = get_data_cache(ticker)
@@ -178,7 +181,7 @@ def update_data(ticker, threshold=1.0):
 @app.callback(Output('live-graph-ethusd', 'figure'),
               events=[Event('interval-component', 'interval')])
 def update_eth_usd():
-    return update_data("ETH-USD")
+      return update_data("ETH-USD")
 
 
 # ETHBTC #
