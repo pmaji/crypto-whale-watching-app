@@ -21,6 +21,8 @@ from queue import Queue
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
+TBL_PRICE='price'
+TBL_VOLUME='volume'
 tables = {}
 
 # creates a cache to speed up load time and facilitate refreshes
@@ -39,43 +41,43 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
 
     # pulls in the order book data from GDAX; split by ask vs bid
     order_book = public_client.get_product_order_book(ticker, level=3)
-    ask_tbl = pd.DataFrame(data=order_book['asks'], columns=['price', 'volume', 'address'])
-    bid_tbl = pd.DataFrame(data=order_book['bids'], columns=['price', 'volume', 'address'])
+    ask_tbl = pd.DataFrame(data=order_book['asks'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
+    bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
 
     # building subsetted table for ask data only
     # sell side (would be Magma)
-    ask_tbl['price'] = pd.to_numeric(ask_tbl['price'])
-    ask_tbl['volume'] = pd.to_numeric(ask_tbl['volume'])
+    ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
+    ask_tbl[TBL_VOLUME] = pd.to_numeric(ask_tbl[TBL_VOLUME])
     first_ask = float(ask_tbl.iloc[1, 0])
     perc_above_first_ask = (1.025 * first_ask)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
-    ask_tbl = ask_tbl[(ask_tbl['price'] <= perc_above_first_ask)]
+    ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
 
     # building subsetted table for bid data only
     # buy side (would be Viridis)
-    bid_tbl['price'] = pd.to_numeric(bid_tbl['price'])
-    bid_tbl['volume'] = pd.to_numeric(bid_tbl['volume'])
+    bid_tbl[TBL_PRICE] = pd.to_numeric(bid_tbl[TBL_PRICE])
+    bid_tbl[TBL_VOLUME] = pd.to_numeric(bid_tbl[TBL_VOLUME])
     first_bid = float(bid_tbl.iloc[1, 0])
     perc_above_first_bid = (0.975 * first_bid)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
-    bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
+    bid_tbl = bid_tbl[(bid_tbl[TBL_PRICE] >= perc_above_first_bid)]
 
     # flip the bid table so that the merged full_tbl is in logical order
     bid_tbl = bid_tbl.iloc[::-1]
     # append the buy and sell side tables to create one cohesive table
     fulltbl = bid_tbl.append(ask_tbl)
     # limit our view to only orders greater than or equal to the threshold size defined
-    fulltbl = fulltbl[(fulltbl['volume'] >= threshold)]
+    fulltbl = fulltbl[(fulltbl[TBL_VOLUME] >= threshold)]
     # takes the square root of the volume (to be used later on for the purpose of sizing the order bubbles)
-    fulltbl['sqrt'] = np.sqrt(fulltbl['volume'])
+    fulltbl['sqrt'] = np.sqrt(fulltbl[TBL_VOLUME])
 
     # transforms the table for a final time to craft the data view we need for analysis
-    final_tbl = fulltbl.groupby(['price'])[['volume']].sum()
-    final_tbl['n_unique_orders'] = fulltbl.groupby('price').address.nunique().astype(float)
-    final_tbl['price'] = final_tbl.index
-    final_tbl['sqrt'] = np.sqrt(final_tbl['volume'])
+    final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
+    final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
+    final_tbl[TBL_PRICE] = final_tbl.index
+    final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     # making the tooltip column for our charts
-    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " " + currency + " available for " + symbol + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " " + currency + " orders")
+    final_tbl['text'] = ("There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " " + currency + " orders")
 
     # get market price; done at the end to correct for any latency in the milliseconds it takes to run this code
     mp = public_client.get_product_ticker(product_id=ticker)
@@ -88,13 +90,13 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
     # sells are red (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
     # color map can be found at : https://matplotlib.org/examples/color/named_colors.html
 
-    final_tbl.loc[((final_tbl['price'] > final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
+    final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'red'
-    final_tbl.loc[((final_tbl['price'] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
+    final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'darkred'
-    final_tbl.loc[((final_tbl['price'] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
+    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'lime'
-    final_tbl.loc[((final_tbl['price'] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
+    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'green'
 
     tables[ticker] = final_tbl
@@ -142,8 +144,8 @@ def update_data(ticker, threshold=1.0):
     result = {
         'data': [
             go.Scatter(
-                x=data['volume'],
-                y=data['price'],
+                x=data[TBL_VOLUME],
+                y=data[TBL_PRICE],
                 mode='markers',
                 text= data['text'],
                 opacity=0.7,
