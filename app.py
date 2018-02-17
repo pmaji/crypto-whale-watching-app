@@ -20,26 +20,28 @@ import threading
 from queue import Queue
 
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
-THRESHHOLDS= {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
+THRESHOLDS = {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
 TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
-TBL_PRICE='price'
-TBL_VOLUME='volume'
+TBL_PRICE = 'price'
+TBL_VOLUME = 'volume'
 tables = {}
+
 
 # creates a cache to speed up load time and facilitate refreshes
 def get_data_cache(ticker):
     return tables[ticker]
 
+
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
+
 
 # function to get data from GDAX to be referenced in our call-back later
 # ticker a string to particular Ticker (e.g. ETH-USD)
-# threshhold is to limit our view to only orders greater than or equal to the threshold size defined
+# threshold is to limit our view to only orders greater than or equal to the threshold size defined
 # uniqueBorder is the border at wich orders are marked differently
 # range is the deviation visible from current price
 def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
-
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -81,13 +83,16 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
     final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
     final_tbl[TBL_PRICE] = final_tbl.index
-    final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args =(3,0,2))
-    final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args =(1,2))
-    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args =(0,))
-    #print(final_tbl)
+    final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, 2))
+    final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args=(1, 2))
+    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
+    # print(final_tbl)
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     # making the tooltip column for our charts
-    final_tbl['text'] = ("There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " " + currency + " orders")
+    final_tbl['text'] = (
+                "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
+            TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
+            str) + " " + currency + " orders")
 
     # get market price; done at the end to correct for any latency in the milliseconds it takes to run this code
     mp = public_client.get_product_ticker(product_id=ticker)
@@ -100,17 +105,22 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
     # sells are red (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
     # color map can be found at : https://matplotlib.org/examples/color/named_colors.html
 
-    final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
+    final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (
+                final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'red'
-    final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
+    final_tbl.loc[
+        ((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'darkred'
-    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
+    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
+                final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'lime'
-    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
+    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
+                final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'green'
 
     tables[ticker] = final_tbl
     return tables[ticker]
+
 
 # establishes a refresh schedule separate from the user's interaction
 # these two steps make the app resilient to DDOS attacks / crashes due to too many manual refreshes
@@ -125,7 +135,7 @@ def refreshWorker():
 def refreshTickers():
     for ticker in TICKERS:
         currency = ticker.split("-")[0]
-        thresh = THRESHHOLDS.get(currency.upper(),1.0)
+        thresh = THRESHOLDS.get(currency.upper(), 1.0)
         get_data(ticker, thresh)
 
 
@@ -137,23 +147,26 @@ app = dash.Dash()
 div_container = [
     html.H2('CRYPTO WHALE WATCHING APP'),
     html.H3("Donations greatly appreciated; will go towards hosting / development"),
-	html.P(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
+    html.P(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
             "BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo", html.Br(),
             "LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM"
-         ]),
+            ]),
     html.H3(html.A("GitHub", href="https://github.com/pmaji/eth_python_tracker")),
-    html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
-	html.A(html.Button('Freeze all'),href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-	html.A(html.Button('Un-freeze all'),href="javascript:location.reload();")
-    ]
+    html.H3(
+        'Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
+    html.A(html.Button('Freeze all'),
+           href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
+    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
+]
 for graphId in GRAPH_IDS:
-   div_container.append(dcc.Graph(id=graphId))
+    div_container.append(dcc.Graph(id=graphId))
 
 div_container.append(dcc.Interval(
-        id='interval-component',
-        interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
-    ))
+    id='interval-component',
+    interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
+))
 app.layout = html.Div(div_container)
+
 
 def update_data(ticker, threshold=1.0):
     data = get_data_cache(ticker)
@@ -165,7 +178,7 @@ def update_data(ticker, threshold=1.0):
                 x=data[TBL_VOLUME],
                 y=data[TBL_PRICE],
                 mode='markers',
-                text= data['text'],
+                text=data['text'],
                 opacity=0.7,
                 hoverinfo='text',
                 marker={
@@ -186,6 +199,7 @@ def update_data(ticker, threshold=1.0):
     }
     return result
 
+
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 
@@ -193,7 +207,7 @@ def update_data(ticker, threshold=1.0):
 @app.callback(Output('live-graph-ethusd', 'figure'),
               events=[Event('interval-component', 'interval')])
 def update_eth_usd():
-      return update_data("ETH-USD")
+    return update_data("ETH-USD")
 
 
 # ETHBTC #
@@ -217,15 +231,20 @@ def update_btc_usd():
 def update_ltc_usd():
     return update_data("LTC-USD")
 
+
 def round_sig(x, sig=3, overwrite=0, minimum=0):
-   if(x==0):
-     return 0.0
-   elif overwrite>0 : return round(x,overwrite)
-   else:
-     digits=-int(floor(log10(abs(x)))) + (sig-1)
-     if digits <= minimum: return round(x,minimum)
-     else: return round(x,digits)
-   
+    if (x == 0):
+        return 0.0
+    elif overwrite > 0:
+        return round(x, overwrite)
+    else:
+        digits = -int(floor(log10(abs(x)))) + (sig - 1)
+        if digits <= minimum:
+            return round(x, minimum)
+        else:
+            return round(x, digits)
+
+
 if __name__ == '__main__':
     refreshTickers()
     t = threading.Thread(target=refreshWorker)
