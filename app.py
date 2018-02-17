@@ -30,7 +30,11 @@ def get_data_cache(ticker):
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
 # function to get data from GDAX to be referenced in our call-back later
-def get_data(ticker, threshold=1.0, uniqueBorder=5):
+# ticker a string to particular Ticker (e.g. ETH-USD)
+# threshhold is to limit our view to only orders greater than or equal to the threshold size defined
+# uniqueBorder is the border at wich orders are marked differently
+# range is the deviation visible from current price
+def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
 
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
@@ -47,7 +51,7 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
     ask_tbl['price'] = pd.to_numeric(ask_tbl['price'])
     ask_tbl['volume'] = pd.to_numeric(ask_tbl['volume'])
     first_ask = float(ask_tbl.iloc[1, 0])
-    perc_above_first_ask = (1.025 * first_ask)
+    perc_above_first_ask = ((1.0 + range) * first_ask)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl['price'] <= perc_above_first_ask)]
 
@@ -56,7 +60,7 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
     bid_tbl['price'] = pd.to_numeric(bid_tbl['price'])
     bid_tbl['volume'] = pd.to_numeric(bid_tbl['volume'])
     first_bid = float(bid_tbl.iloc[1, 0])
-    perc_above_first_bid = (0.975 * first_bid)
+    perc_above_first_bid = ((1.0 - range) * first_bid)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     bid_tbl = bid_tbl[(bid_tbl['price'] >= perc_above_first_bid)]
 
