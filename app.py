@@ -125,7 +125,13 @@ div_container = [
             'BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'),
     html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
     html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
-            'Hover over bubbles for more info.')]
+            'Hover over bubbles for more info.'),
+    '<input id="Freezer" type="button" value="Freeze Data" onclick="freeze();" />',
+    '<script type="text/javascript"> var freezed = false;'
+        'function freeze(){freezed= !freezed; if(freezed){'
+        'var k = setTimeout(function() {for (var i = k; i > 0; i--) clearInterval(i)},1);}'
+        'else{location.reload();}}</script>'
+    ]
 for graphId in GRAPH_IDS:
     div_container.extend(dcc.Graph(id=graphId))
 div_container.extend(dcc.Interval(
