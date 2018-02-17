@@ -128,7 +128,7 @@ div_container = [
             html.P('BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'), 
             html.P('LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM')
          ]),
-    html.H3(html.A(title="GitHub", href="https://github.com/pmaji/eth_python_tracker")),
+    html.H3(html.A("GitHub", href="https://github.com/pmaji/eth_python_tracker")),
     html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info.')
     ]
 for graphId in GRAPH_IDS:
