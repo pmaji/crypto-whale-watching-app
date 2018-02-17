@@ -139,6 +139,8 @@ app.layout = html.Div([
 
 def update_data(ticker, threshold=1.0):
     data = get_data_cache(ticker)
+    base_currency = ticker.split("-")[1]
+    symbol = SYMBOLS.get(base_currency.upper(), "")
     result = {
         'data': [
             go.Scatter(
@@ -158,7 +160,7 @@ def update_data(ticker, threshold=1.0):
         ],
         'layout': go.Layout(
             # makes it so that title automatically updates with refreshed market price
-            title=("The present market price of {} is: ${}".format(ticker, str(data['market price'].iloc[0]))),
+            title=("The present market price of {} is: {}{}".format(ticker, symbol, str(data['market price'].iloc[0]))),
             xaxis={'title': 'Order Size'},
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest'
