@@ -4,6 +4,7 @@
 
 # dash-related libraries for app itself
 import dash
+
 from dash.dependencies import Output, Event
 from math import log10, floor
 import dash_core_components as dcc
@@ -168,7 +169,7 @@ div_container.append(dcc.Interval(
 app.layout = html.Div(div_container)
 
 
-def update_data(ticker, threshold=1.0):
+def update_data(ticker):
     data = get_data_cache(ticker)
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
@@ -203,34 +204,18 @@ def update_data(ticker, threshold=1.0):
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 
-# ETHUSD #
-@app.callback(Output('live-graph-ethusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_eth_usd():
-    return update_data("ETH-USD")
+#Function generator
+def create_cb_func(pGraph):
+    def cb():
+        return update_data(pGraph)
+    return cb
 
-
-# ETHBTC #
-@app.callback(Output('live-graph-ethbtc', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_eth_btc():
-    return update_data("ETH-BTC")
-
-
-# BTCUSD #
-# threshold changed for BTC given higher raw price
-@app.callback(Output('live-graph-btcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_btc_usd():
-    return update_data("BTC-USD", threshold=0.25)
-
-
-# LTCUSD #
-@app.callback(Output('live-graph-ltcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_ltc_usd():
-    return update_data("LTC-USD")
-
+#Loop through graphs and append callback
+for ticker in TICKERS:
+    graph='live-graph-' + ticker.lower().replace('-', '')
+    app.callback(Output(graph, 'figure'),
+                 events=[Event('interval-component', 'interval')]) (create_cb_func(ticker))
+        
 
 def round_sig(x, sig=3, overwrite=0, minimum=0):
     if (x == 0):
@@ -243,7 +228,6 @@ def round_sig(x, sig=3, overwrite=0, minimum=0):
             return round(x, minimum)
         else:
             return round(x, digits)
-
 
 if __name__ == '__main__':
     refreshTickers()
