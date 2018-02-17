@@ -119,22 +119,20 @@ def refreshTickers():
 app = dash.Dash()
 
 # simple layout that can be improved with better CSS later, but it does the job for now
-app.layout = html.Div([
+div_container = [
     html.H2('CRYPTO WHALE WATCHING APP (support / donations appreciated)'),
     html.H3('ETH Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49' + ' -------------------- '
             'BTC Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo'),
     html.H3('GitHub: https://github.com/pmaji/eth_python_tracker'),
     html.H3('Legend: Bright colored mark = 5 or more distinct orders at a price-point. '
-            'Hover over bubbles for more info.'),
-    dcc.Graph(id=GRAPH_IDS[0]),
-    dcc.Graph(id=GRAPH_IDS[1]),
-    dcc.Graph(id=GRAPH_IDS[2]),
-    dcc.Graph(id=GRAPH_IDS[3]),
-    dcc.Interval(
+            'Hover over bubbles for more info.')]
+for graphId in GRAPH_IDS:
+    div_container.extend(dcc.Graph(id=graphId))
+div_container.extend(dcc.Interval(
         id='interval-component',
         interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
     )
-])
+app.layout = html.Div(div_container)
 
 
 def update_data(ticker, threshold=1.0):
