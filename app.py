@@ -71,11 +71,11 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5):
 
     # transforms the table for a final time to craft the data view we need for analysis
     final_tbl = fulltbl.groupby(['price'])[['volume']].sum()
-    final_tbl['n_unique_orders'] = fulltbl.groupby('price').address.nunique().astype(float)
+    final_tbl['n_unique_orders'] = fulltbl.groupby('price').address.nunique().astype(int)
     final_tbl['price'] = final_tbl.index
     final_tbl['sqrt'] = np.sqrt(final_tbl['volume'])
     # making the tooltip column for our charts
-    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " " + currency + " available for " + symbol + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " " + currency + " orders")
+    final_tbl['text'] = ("There are " + final_tbl['volume'].map(str) + " " + currency + " available for " + symbol + final_tbl['price'].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(str) + " unique orders for a total price of " + symbol + (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x))).map(str))
 
     # get market price; done at the end to correct for any latency in the milliseconds it takes to run this code
     mp = public_client.get_product_ticker(product_id=ticker)
