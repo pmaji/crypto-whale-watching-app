@@ -174,30 +174,39 @@ def update_data(ticker, threshold=1.0):
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 
-for graph in GRAPH_IDS:
-    @app.callback(Output(graph, 'figure'),
+# ETHUSD #
+@app.callback(Output('live-graph-ethusd', 'figure'),
               events=[Event('interval-component', 'interval')])
+def update_eth_usd():
+    return update_data("ETH-USD")
 
-    def update_eth_usd():
-        return update_data("ETH-USD")
 
 # ETHBTC #
-    def update_eth_btc():
-        return update_data("ETH-BTC")
+@app.callback(Output('live-graph-ethbtc', 'figure'),
+              events=[Event('interval-component', 'interval')])
+def update_eth_btc():
+    return update_data("ETH-BTC")
+
 
 # BTCUSD #
 # threshold changed for BTC given higher raw price
-    def update_btc_usd():
-        return update_data("BTC-USD", threshold=0.25)
+@app.callback(Output('live-graph-btcusd', 'figure'),
+              events=[Event('interval-component', 'interval')])
+def update_btc_usd():
+    return update_data("BTC-USD", threshold=0.25)
+
 
 # LTCUSD #
-    def update_ltc_usd():
-        return update_data("LTC-USD")
+@app.callback(Output('live-graph-ltcusd', 'figure'),
+              events=[Event('interval-component', 'interval')])
+def update_ltc_usd():
+    return update_data("LTC-USD")
 
-    if __name__ == '__main__':
-        refreshTickers()
-        t = threading.Thread(target=refreshWorker)
-        t.daemon = True
-        t.start()
 
-    app.run_server(host='0.0.0.0')
+if __name__ == '__main__':
+    refreshTickers()
+    t = threading.Thread(target=refreshWorker)
+    t.daemon = True
+    t.start()
+
+app.run_server(host='0.0.0.0')
