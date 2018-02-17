@@ -132,7 +132,7 @@ app.layout = html.Div([
     dcc.Graph(id=GRAPH_IDS[3]),
     dcc.Interval(
         id='interval-component',
-        interval=1 * 4000  # in milliseconds for the automatic refresh; refreshes every 2 seconds
+        interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
     )
 ])
 
