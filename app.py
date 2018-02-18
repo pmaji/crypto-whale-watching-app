@@ -166,7 +166,7 @@ for ticker in TICKERS:
     graph= 'live-graph-' + ticker.lower().replace('-', '')
     div_container.append(html.Br())
     div_container.append(html.Br())
-    div_container.append(html.A(html.Button('Hide '+ticker), 
+    div_container.append(html.A(html.Button('Hide/ Show '+ticker), 
       href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
     div_container.append(dcc.Graph(id=graph))
 
@@ -224,7 +224,7 @@ def update_Site_data():
      graph= 'live-graph-' + ticker.lower().replace('-', '')
      div_container.append(html.Br())
      div_container.append(html.Br())
-     div_container.append(html.A(html.Button('Hide '+ticker), 
+     div_container.append(html.A(html.Button('Hide/ Show '+ticker), 
        href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
      div_container.append(dcc.Graph(
                     id=graph, 
