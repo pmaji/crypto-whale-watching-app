@@ -22,7 +22,7 @@ from queue import Queue
 
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 THRESHOLDS = {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
-TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD")
+TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
