@@ -156,8 +156,11 @@ div_container = [
     html.H3(
         'Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
     html.A(html.Button('Freeze all'),
+           #We create a link, containing a button. The link is JavaScript.
+           #1. It creates a Timeout to get the current highest Timeout/ Interval number
+           #2. It clears all Timeouts from the recieved highest num to 0.
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();"),
+    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();"),#Same as above, except, that we reload to reinitialize Plotty correctly
     # This line is for colorblind mode: 1. setInterval function, 2. Loop through all bubbles, 3. Get RGB
     # 4. If Green=0 next bubble, 5. Blue=Green 6. Green = 0, 7. save new color code
     html.A(html.Button('Colorblind mode'), href='javascript:setInterval(function(){var elems=document.getElementsByClassName("point");var amount=elems.length; var x=0;while (x<amount){var nElement=elems[x].style.fill;var rgb=nElement.split("(")[1].split(")")[0].split(",");if(parseInt(rgb[1])!=0){rgb[2]=rgb[1];rgb[1]=" 0";rgb="rgb("+rgb[0]+","+rgb[1]+","+rgb[2]+")";document.getElementsByClassName("point")[x].style.fill=rgb;}x++;}},50);')
