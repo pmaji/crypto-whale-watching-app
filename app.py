@@ -156,8 +156,11 @@ div_container = [
     html.H3(
         'Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
     html.A(html.Button('Freeze all'),
+           #We create a link, containing a button. The link is JavaScript.
+           #1. It creates a Timeout to get the current highest Timeout/ Interval number
+           #2. It clears all Timeouts from the recieved highest num to 0.
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
+    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();") #Same as above, except, that we reload to reinitialize Plotty correctly
 ]
 for graphId in GRAPH_IDS:
     div_container.append(dcc.Graph(id=graphId))
