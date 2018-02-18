@@ -91,9 +91,9 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     # making the tooltip column for our charts
     final_tbl['text'] = (
-                "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
-            TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-            str) + " " + currency + " orders")
+            "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
+        TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
+        str) + " " + currency + " orders")
 
     # get market price; done at the end to correct for any latency in the milliseconds it takes to run this code
     mp = public_client.get_product_ticker(product_id=ticker)
@@ -107,16 +107,16 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
     # color map can be found at : https://matplotlib.org/examples/color/named_colors.html
 
     final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (
-                final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
+            final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'red'
     final_tbl.loc[
         ((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'darkred'
     final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
-                final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
+            final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
         'lime'
     final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
-                final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
+            final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
         'green'
 
     tables[ticker] = final_tbl
@@ -147,12 +147,12 @@ app = dash.Dash()
 
 div_container = [
     html.H2('CRYPTO WHALE WATCHING APP'),
-    html.H3("Donations greatly appreciated; will go towards hosting / development"),
-    html.P(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
-            "BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo", html.Br(),
-            "LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM"
+    html.H3('Donations greatly appreciated; will go towards hosting / development'),
+    html.P(['ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49', html.Br(),
+            'BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo', html.Br(),
+            'LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'
             ]),
-    html.H3(html.A("GitHub", href="https://github.com/pmaji/eth_python_tracker")),
+    html.H3(html.A('GitHub Link (Click to support us by giving a star or request new features via "issues" tab)', href="https://github.com/pmaji/eth_python_tracker")),
     html.H3(
         'Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
     html.A(html.Button('Freeze all'),
@@ -204,18 +204,20 @@ def update_data(ticker):
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 
-#Function generator
+# Function generator
 def create_cb_func(pGraph):
     def cb():
         return update_data(pGraph)
+
     return cb
 
-#Loop through graphs and append callback
+
+# Loop through graphs and append callback
 for ticker in TICKERS:
-    graph='live-graph-' + ticker.lower().replace('-', '')
+    graph = 'live-graph-' + ticker.lower().replace('-', '')
     app.callback(Output(graph, 'figure'),
-                 events=[Event('interval-component', 'interval')]) (create_cb_func(ticker))
-        
+                 events=[Event('interval-component', 'interval')])(create_cb_func(ticker))
+
 
 def round_sig(x, sig=3, overwrite=0, minimum=0):
     if (x == 0):
@@ -228,6 +230,7 @@ def round_sig(x, sig=3, overwrite=0, minimum=0):
             return round(x, minimum)
         else:
             return round(x, digits)
+
 
 if __name__ == '__main__':
     refreshTickers()
