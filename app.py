@@ -42,7 +42,7 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 # threshold is to limit our view to only orders greater than or equal to the threshold size defined
 # uniqueBorder is the border at wich orders are marked differently
 # range is the deviation visible from current price
-def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
+def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025 , maxSize=32):
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -89,6 +89,9 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
     final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
     # print(final_tbl)
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
+    cMaxSize = final_tbl['sqrt'].max()
+    sizeFactor = maxSize/cMaxSize
+    final_tbl['sqrt'] = final_tbl['sqrt'] * sizeFactor
     # making the tooltip column for our charts
     final_tbl['text'] = (
             "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
