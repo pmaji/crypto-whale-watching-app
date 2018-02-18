@@ -73,16 +73,17 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     perc_above_first_ask = ((1.0 + range) * first_ask)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
-    dif_ask = perc_above_first_ask - first_bid 
+    dif_ask = perc_above_first_ask - first_ask 
     ob_step = dif_ask/ob_points 
     ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
     # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
-    for i in range(1,ob_points):
-        current_border= first_bid+(i*ob_step)
-        current_tbl=bid_tbl[(ask_tbl[TBL_PRICE] >= first_bid) and (ask_tbl[TBL_PRICE] < current_border)]
-        current_volume=current_tbl[[TBL_VOLUME].sum()
-        current_adresses = current_tbl[['address']].sum()
+    i=1
+    while  i<ob_points:
+        current_border= first_ask+(i*ob_step)
+        current_volume=ask_tbl.loc[(ask_tbl[TBL_PRICE]>= first_ask)&(ask_tbl[TBL_PRICE] < current_border),TBL_VOLUME].sum()
+        current_adresses=ask_tbl.loc[(ask_tbl[TBL_PRICE] >= first_ask)&(ask_tbl[TBL_PRICE] < current_border),'address'].sum()
         ob_ask.loc[i-1] = [current_border,current_volume,current_adresses]
+        i+=1
 
     # building subsetted table for bid data only
     # buy side (would be Viridis)
@@ -96,12 +97,13 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     ob_step = dif_bid/ob_points 
     ob_bid = pd.DataFrame(columns=[TBL_PRICE, 'volume', 'address'])
     # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
-    for i in range(1,ob_points):
+    i=1
+    while  i<ob_points:
         current_border= first_bid-(i*ob_step)
-        current_tbl=bid_tbl[(bid_tbl[TBL_PRICE] <= first_bid) and (bid_tbl[TBL_PRICE] > current_border)]
-        current_volume=current_tbl[[TBL_VOLUME]].sum()
-        current_adresses = current_tbl[['address']].sum()
+        current_volume=bid_tbl.loc[(bid_tbl[TBL_PRICE] <= first_bid)&(bid_tbl[TBL_PRICE] > current_border),TBL_VOLUME].sum()
+        current_adresses=bid_tbl.loc[(bid_tbl[TBL_PRICE] <= first_bid)&(bid_tbl[TBL_PRICE] > current_border),'address'].sum()
         ob_bid.loc[i-1] = [current_border,current_volume,current_adresses]
+        i+=1
 
     # flip the bid table so that the merged full_tbl is in logical order
     bid_tbl = bid_tbl.iloc[::-1]
