@@ -159,8 +159,14 @@ div_container = [
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
     html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
 ]
-for graphId in GRAPH_IDS:
-    div_container.append(dcc.Graph(id=graphId))
+for ticker in TICKERS:
+    graph= 'live-graph-' + ticker.lower().replace('-', '')
+    div_container.append(html.Br())
+    div_container.append(html.Br())
+    div_container.append(html.A(html.Button('Hide '+ticker),
+      #Gets Graph Elements and toggles style="display:none"/style="display:"
+      href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
+    div_container.append(dcc.Graph(id=graph))
 
 div_container.append(dcc.Interval(
     id='interval-component',
