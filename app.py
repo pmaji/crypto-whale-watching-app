@@ -118,19 +118,12 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     # buys are green (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
     # sells are red (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
     # color map can be found at : https://matplotlib.org/examples/color/named_colors.html
-
-    final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (
-            final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
-        'red'
-    final_tbl.loc[
-        ((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
-        'darkred'
-    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
-            final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
-        'lime'
-    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
-            final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
-        'green'
+    marketPrice=final_tbl['market price']
+    final_tbl['colorintensity']=final_tbl['n_unique_orders'].apply(calcColor)
+    final_tbl.loc[(final_tbl[TBL_PRICE]>marketPrice),'color']= \
+             'rgb('+final_tbl.loc[(final_tbl[TBL_PRICE]>marketPrice),'colorintensity'].map(str) +',0,0)'
+    final_tbl.loc[(final_tbl[TBL_PRICE]<=marketPrice),'color']= \
+             'rgb(0,'+final_tbl.loc[(final_tbl[TBL_PRICE]<=marketPrice),'colorintensity'].map(str) +',0)'
 
     tables[ticker] = final_tbl
     return tables[ticker]
@@ -193,7 +186,7 @@ def update_data(ticker):
                 y=data[TBL_PRICE],
                 mode='markers',
                 text=data['text'],
-                opacity=0.7,
+                opacity=0.95,
                 hoverinfo='text',
                 marker={
                     'size': data['sqrt'],
@@ -248,6 +241,11 @@ def round_sig(x, sig=3, overwrite=0, minimum=0):
         else:
             return round(x, digits)
 
+def calcColor(x):
+   response=round(400/x)
+   if response>255 : response=255
+   elif response<30 : response=30
+   return response
 
 if __name__ == '__main__':
     refreshTickers()
