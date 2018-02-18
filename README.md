@@ -36,15 +36,24 @@ Anyone interested with Python 3.6 installed can download the app.py or clone the
 While this project has grown in popularity a great deal as of late, there is still much to be done. Below is a summary of the main needs that we have presently with which anyone can assist (this is a community project after all!):
 
 1. Donations for host-fees and development work (presently raising money for AWS migration)
-     **ETH donations address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49
-     BTC donations address: 1M2fFerihy68gVJ5gvB7yrnwBbzEPhCbZ2
-     LTC donations address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM**
+
+     1. **ETH donations address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49**
+     
+     2. **BTC donations address: 1M2fFerihy68gVJ5gvB7yrnwBbzEPhCbZ2**
+     
+     3. **LTC donations address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM**
+     
 2. Overall promotion:
-     Keep sharing with you friends / fellow traders / coders so that we can get more constructive feedback.
-     Consider starring us on GitHub as a means of sharing this project with the broader community.
+
+     1. Keep sharing with you friends / fellow traders / coders so that we can get more constructive feedback.
+     
+     2. Consider starring us on GitHub as a means of sharing this project with the broader community.
+     
 3. Technical assistance and ideation:
-     If you have coding experience, check out the code and issues tab and see if you can help with anything or propose new additions.
-     If you want new features integrated or have any other ideas, open a new issue and I'll address them ASAP.
+
+     1. If you have coding experience, check out the code and issues tab and see if you can help with anything or propose new additions.
+     
+     2. If you want new features integrated or have any other ideas, open a new issue and I'll address them ASAP.
 
 
 
