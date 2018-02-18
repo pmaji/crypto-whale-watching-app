@@ -46,7 +46,6 @@ def getSendCache():
 
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
-
 # function to get data from GDAX to be referenced in our call-back later
 # ticker a string to particular Ticker (e.g. ETH-USD)
 # threshold is to limit our view to only orders greater than or equal to the threshold size defined
@@ -55,6 +54,7 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 
 def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minVolumePerc=0.01):
     global tables
+    ob_points=30 #the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -73,6 +73,16 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     perc_above_first_ask = ((1.0 + range) * first_ask)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
+    dif_ask = perc_above_first_ask - first_bid 
+    ob_step = dif_ask/ob_points 
+    ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
+    # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
+    for i in range(1,ob_points):
+        current_border= first_bid+(i*ob_step)
+        current_tbl=bid_tbl[(ask_tbl[TBL_PRICE] >= first_bid) and (ask_tbl[TBL_PRICE] < current_border)]
+        current_volume=current_tbl[[TBL_VOLUME].sum()
+        current_adresses = current_tbl[['address']].sum()
+        ob_ask.loc[i-1] = [current_border,current_volume,current_adresses]
 
     # building subsetted table for bid data only
     # buy side (would be Viridis)
@@ -82,6 +92,16 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     perc_above_first_bid = ((1.0 - range) * first_bid)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     bid_tbl = bid_tbl[(bid_tbl[TBL_PRICE] >= perc_above_first_bid)]
+    dif_bid = first_bid - perc_above_first_bid 
+    ob_step = dif_bid/ob_points 
+    ob_bid = pd.DataFrame(columns=[TBL_PRICE, 'volume', 'address'])
+    # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
+    for i in range(1,ob_points):
+        current_border= first_bid-(i*ob_step)
+        current_tbl=bid_tbl[(bid_tbl[TBL_PRICE] <= first_bid) and (bid_tbl[TBL_PRICE] > current_border)]
+        current_volume=current_tbl[[TBL_VOLUME]].sum()
+        current_adresses = current_tbl[['address']].sum()
+        ob_bid.loc[i-1] = [current_border,current_volume,current_adresses]
 
     # flip the bid table so that the merged full_tbl is in logical order
     bid_tbl = bid_tbl.iloc[::-1]
