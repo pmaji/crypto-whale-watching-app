@@ -22,12 +22,14 @@ from queue import Queue
 
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 THRESHOLDS = {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
+
 TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
 sendCache = {}
+
 
 # creates a cache to speed up load time and facilitate refreshes
 def get_data_cache(ticker):
@@ -47,6 +49,7 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 # threshold is to limit our view to only orders greater than or equal to the threshold size defined
 # uniqueBorder is the border at wich orders are marked differently
 # range is the deviation visible from current price
+
 def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minVolumePerc=0.01):
     global tables
     # Determine what currencies we're working with to make the tool tip more dynamic.
@@ -88,6 +91,7 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
 
     # transforms the table for a final time to craft the data view we need for analysis
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
+
         
     #Filter to just use data > Minimal Volume Percent
     minVolume=final_tbl[TBL_VOLUME].sum() * minVolumePerc
@@ -155,7 +159,6 @@ def refreshTickers():
 app = dash.Dash()
 
 # simple layout that can be improved with better CSS later, but it does the job for now
-
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
     html.H3('Donations greatly appreciated; will go towards hosting / development'),
@@ -251,6 +254,7 @@ def round_sig(x, sig=3, overwrite=0, minimum=0):
             return round(x, minimum)
         else:
             return round(x, digits)
+
 
 def calcColor(x):
    response=round(400/x)
