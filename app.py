@@ -4,6 +4,7 @@
 
 # dash-related libraries for app itself
 import dash
+
 from dash.dependencies import Output, Event
 from math import log10, floor
 import dash_core_components as dcc
@@ -21,16 +22,26 @@ from queue import Queue
 
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 THRESHOLDS = {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
-TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD")
+
+TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
+sendCache = {}
 
 
 # creates a cache to speed up load time and facilitate refreshes
 def get_data_cache(ticker):
     return tables[ticker]
+
+
+def get_All_data():
+    return tables
+
+
+def getSendCache():
+    return sendCache
 
 
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
@@ -40,7 +51,9 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 # threshold is to limit our view to only orders greater than or equal to the threshold size defined
 # uniqueBorder is the border at wich orders are marked differently
 # range is the deviation visible from current price
-def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
+
+def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minVolumePerc=0.01):
+    global tables
     ob_points=30 #the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
@@ -101,6 +114,11 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
 
     # transforms the table for a final time to craft the data view we need for analysis
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
+
+    # Filter to just use data > Minimal Volume Percent
+    minVolume = final_tbl[TBL_VOLUME].sum() * minVolumePerc
+    final_tbl = final_tbl[(final_tbl[TBL_VOLUME] >= minVolume)]
+
     final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
     final_tbl[TBL_PRICE] = final_tbl.index
     final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, 2))
@@ -108,11 +126,17 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
     final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
     # print(final_tbl)
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
+
+    # Fixing Bubble Size
+    cMaxSize = final_tbl['sqrt'].max()
+    sizeFactor = maxSize / cMaxSize
+    final_tbl['sqrt'] = final_tbl['sqrt'] * sizeFactor
+
     # making the tooltip column for our charts
     final_tbl['text'] = (
-                "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
-            TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-            str) + " " + currency + " orders")
+            "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
+        TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
+        str) + " " + currency + " orders")
 
     # get market price; done at the end to correct for any latency in the milliseconds it takes to run this code
     mp = public_client.get_product_ticker(product_id=ticker)
@@ -121,24 +145,16 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
     final_tbl['market price'] = final_tbl['market price'].astype(float)
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
-    # buys are green (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
-    # sells are red (with default uniqueBorder if there are 5 or more unique orders at a price, the color is bright, else dark)
-    # color map can be found at : https://matplotlib.org/examples/color/named_colors.html
-
-    final_tbl.loc[((final_tbl[TBL_PRICE] > final_tbl['market price']) & (
-                final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
-        'red'
-    final_tbl.loc[
-        ((final_tbl[TBL_PRICE] > final_tbl['market price']) & (final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
-        'darkred'
-    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
-                final_tbl['n_unique_orders'] >= uniqueBorder)), 'color'] = \
-        'lime'
-    final_tbl.loc[((final_tbl[TBL_PRICE] <= final_tbl['market price']) & (
-                final_tbl['n_unique_orders'] < uniqueBorder)), 'color'] = \
-        'green'
+    # Buys are green, Sells are Red. Phishy ones are highlighted by beeing bright, detected by unqiue orders.
+    marketPrice = final_tbl['market price']
+    final_tbl['colorintensity'] = final_tbl['n_unique_orders'].apply(calcColor)
+    final_tbl.loc[(final_tbl[TBL_PRICE] > marketPrice), 'color'] = \
+        'rgb(' + final_tbl.loc[(final_tbl[TBL_PRICE] > marketPrice), 'colorintensity'].map(str) + ',0,0)'
+    final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'color'] = \
+        'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'colorintensity'].map(str) + ',0)'
 
     tables[ticker] = final_tbl
+    tables[ticker] = prepare_data(ticker)
     return tables[ticker]
 
 
@@ -153,42 +169,46 @@ def refreshWorker():
 
 
 def refreshTickers():
+    global sendCache
     for ticker in TICKERS:
         currency = ticker.split("-")[0]
         thresh = THRESHOLDS.get(currency.upper(), 1.0)
         get_data(ticker, thresh)
+    sendCache = prepare_send()
 
 
 # begin building the dash itself
 app = dash.Dash()
 
 # simple layout that can be improved with better CSS later, but it does the job for now
-
-div_container = [
+static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
-    html.H3("Donations greatly appreciated; will go towards hosting / development"),
-    html.P(["ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49", html.Br(),
-            "BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo", html.Br(),
-            "LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM"
+    html.H3('Donations greatly appreciated; will go towards hosting / development'),
+    html.P(['ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49', html.Br(),
+            'BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo', html.Br(),
+            'LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'
             ]),
-    html.H3(html.A("GitHub", href="https://github.com/pmaji/eth_python_tracker")),
+    html.H3(html.A('GitHub Link (Click to support us by giving a star or request new features via "issues" tab)',
+                   href="https://github.com/pmaji/eth_python_tracker")),
     html.H3(
-        'Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
+        'Legend: Bright colored mark = WHALE (high volume at one price point via one unique order). The bubbles get darker as the number of unique orders increases. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
     html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
 ]
-for graphId in GRAPH_IDS:
-    div_container.append(dcc.Graph(id=graphId))
 
-div_container.append(dcc.Interval(
-    id='interval-component',
-    interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
-))
-app.layout = html.Div(div_container)
+static_content_after = dcc.Interval(
+    id='main-interval-component',
+    interval=2 * 1000  # in milliseconds for the automatic refresh; refreshes every 2 seconds
+)
+app.layout = html.Div(id='main_container', children=[
+    html.Div(static_content_before),
+    html.Div(id='graphs_Container'),
+    html.Div(static_content_after),
+])
 
 
-def update_data(ticker, threshold=1.0):
+def prepare_data(ticker):
     data = get_data_cache(ticker)
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
@@ -199,7 +219,7 @@ def update_data(ticker, threshold=1.0):
                 y=data[TBL_PRICE],
                 mode='markers',
                 text=data['text'],
-                opacity=0.7,
+                opacity=0.95,
                 hoverinfo='text',
                 marker={
                     'size': data['sqrt'],
@@ -212,7 +232,11 @@ def update_data(ticker, threshold=1.0):
         'layout': go.Layout(
             # makes it so that title automatically updates with refreshed market price
             title=("The present market price of {} is: {}{}".format(ticker, symbol, str(data['market price'].iloc[0]))),
-            xaxis={'title': 'Order Size'},
+            xaxis=dict(
+                title='Order Size',
+                type='log',
+                autorange=True
+            ),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest'
         )
@@ -220,36 +244,28 @@ def update_data(ticker, threshold=1.0):
     return result
 
 
+def prepare_send():
+    lCache = []
+    cData = get_All_data()
+    for ticker in TICKERS:
+        graph = 'live-graph-' + ticker.lower().replace('-', '')
+        lCache.append(html.Br())
+        lCache.append(html.Br())
+        lCache.append(html.A(html.Button('Hide/ Show ' + ticker),
+                             href='javascript:(function(){if(document.getElementById("' + graph + '").style.display==""){document.getElementById("' + graph + '").style.display="none"}else{document.getElementById("' + graph + '").style.display=""}})()'))
+        lCache.append(dcc.Graph(
+            id=graph,
+            figure=cData[ticker]
+        ))
+    return lCache
+
+
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
-
-# ETHUSD #
-@app.callback(Output('live-graph-ethusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_eth_usd():
-    return update_data("ETH-USD")
-
-
-# ETHBTC #
-@app.callback(Output('live-graph-ethbtc', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_eth_btc():
-    return update_data("ETH-BTC")
-
-
-# BTCUSD #
-# threshold changed for BTC given higher raw price
-@app.callback(Output('live-graph-btcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_btc_usd():
-    return update_data("BTC-USD", threshold=0.25)
-
-
-# LTCUSD #
-@app.callback(Output('live-graph-ltcusd', 'figure'),
-              events=[Event('interval-component', 'interval')])
-def update_ltc_usd():
-    return update_data("LTC-USD")
+@app.callback(Output('graphs_Container', 'children'),
+              events=[Event('main-interval-component', 'interval')])
+def update_Site_data():
+    return getSendCache()
 
 
 def round_sig(x, sig=3, overwrite=0, minimum=0):
@@ -263,6 +279,15 @@ def round_sig(x, sig=3, overwrite=0, minimum=0):
             return round(x, minimum)
         else:
             return round(x, digits)
+
+
+def calcColor(x):
+    response = round(400 / x)
+    if response > 255:
+        response = 255
+    elif response < 30:
+        response = 30
+    return response
 
 
 if __name__ == '__main__':
