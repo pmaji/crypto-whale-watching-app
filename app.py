@@ -73,8 +73,8 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     perc_above_first_ask = ((1.0 + range) * first_ask)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
-    dif_ask = perc_above_first_ask - first_ask 
-    ob_step = dif_ask/ob_points 
+    dif_ask = perc_above_first_ask - first_ask
+    ob_step = dif_ask/ob_points
     ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
     # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
     i=1
@@ -93,8 +93,8 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     perc_above_first_bid = ((1.0 - range) * first_bid)
     # limits the size of the table so that we only look at orders 2.5% above and under market price
     bid_tbl = bid_tbl[(bid_tbl[TBL_PRICE] >= perc_above_first_bid)]
-    dif_bid = first_bid - perc_above_first_bid 
-    ob_step = dif_bid/ob_points 
+    dif_bid = first_bid - perc_above_first_bid
+    ob_step = dif_bid/ob_points
     ob_bid = pd.DataFrame(columns=[TBL_PRICE, 'volume', 'address'])
     # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
     i=1
@@ -240,7 +240,21 @@ def prepare_data(ticker):
                 autorange=True
             ),
             yaxis={'title': '{} Price'.format(ticker)},
-            hovermode='closest'
+            hovermode='closest',
+            # now code to ensure the sizing is right
+            autosize=False,
+            width=1000,
+            height=600,
+            margin=go.Margin(
+                l=100,
+                r=50,
+                b=100,
+                t=100,
+                pad=4
+            ),
+            paper_bgcolor='#c7c7c7',
+            plot_bgcolor='#c7c7c7'
+
         )
     }
     return result
