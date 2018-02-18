@@ -3,7 +3,7 @@ Welcome! This is a Python-based Dash app meant to track whale activity in buy / 
 
 The idea for this app came to me while looking at buy and sell walls on GDAX. While you can see large walls, you cannot see how much of these are due to individuals vs. group clustering. This difference is quite important, as it impacts how quickly walls can be pulled, etc., so having buy / sell-wall information at the order level can prove quite valuable for traders. This simple app allows you to access just that information, by focusing on individual limit orders that constitute large walls, and particularly emphasizing the largest orders. Hover over any particular price-point to see a tooltip that displays helpful information, including how many unique orders are behind that particular price-point bubble.
 
-![Main UI](/screenshots/main_app_ui.jpeg)
+![Main UI](https://raw.githubusercontent.com/pmaji/eth_python_tracker/master/screenshots/main_app_ui.JPG)
 
 Screenshots of the app's UI are included above. The size of each observation is deteremined by the square root of the volume of all orders at that particular price-point. The color-coding allows for easy identification of price-points where there are at least 5 distinct orders placed. I filter out all orders less than 1 ETH in size, and only pull order book information within 2.5% of the present market price of each currency (to speed up pulls and make the viz. useful). 
 
