@@ -253,7 +253,22 @@ def prepare_data(ticker):
                 pad=4
             ),
             paper_bgcolor='#c7c7c7',
-            plot_bgcolor='#c7c7c7'
+            plot_bgcolor='#c7c7c7',
+            # adding the horizontal reference line at market price
+            shapes=[{
+                # Line Horizontal
+
+            'type': 'line',
+            'x0': data[TBL_VOLUME].min(),
+            'y0': data['market price'].iloc[0],
+            'x1': data[TBL_VOLUME].max(),
+            'y1': data['market price'].iloc[0],
+            'line': {
+                'color': 'rgb(0, 0, 0)',
+                'width': 2,
+                'dash': 'dash',
+                    }
+                }]
 
         )
     }
