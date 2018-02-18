@@ -168,14 +168,7 @@ static_content_before = [
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
     html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
  ]
-div_container = []
-for ticker in TICKERS:
-    graph= 'live-graph-' + ticker.lower().replace('-', '')
-    div_container.append(html.Br())
-    div_container.append(html.Br())
-    div_container.append(html.A(html.Button('Hide '+ticker), 
-      href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
-    div_container.append(dcc.Graph(id=graph))
+
 
 static_content_after=dcc.Interval(
     id='main-interval-component',
@@ -183,7 +176,7 @@ static_content_after=dcc.Interval(
 )
 app.layout = html.Div(id='main_container',children=[
      html.Div(static_content_before),
-     html.Div(id='graphs_Container',children=div_container),
+     html.Div(id='graphs_Container'),
      html.Div(static_content_after),
   ])
 
@@ -226,7 +219,7 @@ def prepare_send():
      graph= 'live-graph-' + ticker.lower().replace('-', '')
      lCache.append(html.Br())
      lCache.append(html.Br())
-     lCache.append(html.A(html.Button('Hide '+ticker), 
+     lCache.append(html.A(html.Button('Hide/ Show '+ticker), 
        href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
      lCache.append(dcc.Graph(
                     id=graph, 
