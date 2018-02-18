@@ -33,6 +33,8 @@ tables = {}
 def get_data_cache(ticker):
     return tables[ticker]
 
+def get_All_data():
+   return tables
 
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
@@ -120,6 +122,7 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
         'green'
 
     tables[ticker] = final_tbl
+    tables[ticker] = prepare_data(ticker)
     return tables[ticker]
 
 
@@ -144,8 +147,7 @@ def refreshTickers():
 app = dash.Dash()
 
 # simple layout that can be improved with better CSS later, but it does the job for now
-
-div_container = [
+static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
     html.H3('Donations greatly appreciated; will go towards hosting / development'),
     html.P(['ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49', html.Br(),
@@ -158,18 +160,28 @@ div_container = [
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
     html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
-]
-for graphId in GRAPH_IDS:
-    div_container.append(dcc.Graph(id=graphId))
+ ]
+div_container = []
+for ticker in TICKERS:
+    graph= 'live-graph-' + ticker.lower().replace('-', '')
+    div_container.append(html.Br())
+    div_container.append(html.Br())
+    div_container.append(html.A(html.Button('Hide '+ticker), 
+      href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
+    div_container.append(dcc.Graph(id=graph))
 
-div_container.append(dcc.Interval(
-    id='interval-component',
+static_content_after=dcc.Interval(
+    id='main-interval-component',
     interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
-))
-app.layout = html.Div(div_container)
+)
+app.layout = html.Div(id='main_container',children=[
+     html.Div(static_content_before),
+     html.Div(id='graphs_Container',children=div_container),
+     html.Div(static_content_after),
+  ])
 
 
-def update_data(ticker):
+def prepare_data(ticker):
     data = get_data_cache(ticker)
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
@@ -203,20 +215,22 @@ def update_data(ticker):
 
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
-
-# Function generator
-def create_cb_func(pGraph):
-    def cb():
-        return update_data(pGraph)
-
-    return cb
-
-
-# Loop through graphs and append callback
-for ticker in TICKERS:
-    graph = 'live-graph-' + ticker.lower().replace('-', '')
-    app.callback(Output(graph, 'figure'),
-                 events=[Event('interval-component', 'interval')])(create_cb_func(ticker))
+@app.callback(Output('graphs_Container', 'children'),
+   events=[Event('main-interval-component', 'interval')])
+def update_Site_data():
+   div_container = []
+   cData=get_All_data()
+   for ticker in TICKERS:
+     graph= 'live-graph-' + ticker.lower().replace('-', '')
+     div_container.append(html.Br())
+     div_container.append(html.Br())
+     div_container.append(html.A(html.Button('Hide '+ticker), 
+       href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
+     div_container.append(dcc.Graph(
+                    id=graph, 
+                    figure=cData[ticker]
+                    ))
+   return div_container
 
 
 def round_sig(x, sig=3, overwrite=0, minimum=0):
