@@ -35,11 +35,14 @@ sendCache = {}
 def get_data_cache(ticker):
     return tables[ticker]
 
+
 def get_All_data():
-   return tables
+    return tables
+
 
 def getSendCache():
-   return sendCache
+    return sendCache
+
 
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
@@ -92,9 +95,8 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     # transforms the table for a final time to craft the data view we need for analysis
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
 
-        
-    #Filter to just use data > Minimal Volume Percent
-    minVolume=final_tbl[TBL_VOLUME].sum() * minVolumePerc
+    # Filter to just use data > Minimal Volume Percent
+    minVolume = final_tbl[TBL_VOLUME].sum() * minVolumePerc
     final_tbl = final_tbl[(final_tbl[TBL_VOLUME] >= minVolume)]
 
     final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
@@ -107,9 +109,9 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
 
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
-    sizeFactor = maxSize/cMaxSize
+    sizeFactor = maxSize / cMaxSize
     final_tbl['sqrt'] = final_tbl['sqrt'] * sizeFactor
-    
+
     # making the tooltip column for our charts
     final_tbl['text'] = (
             "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
@@ -124,12 +126,12 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
     # Buys are green, Sells are Red. Phishy ones are highlighted by beeing bright, detected by unqiue orders.
-    marketPrice=final_tbl['market price']
-    final_tbl['colorintensity']=final_tbl['n_unique_orders'].apply(calcColor)
-    final_tbl.loc[(final_tbl[TBL_PRICE]>marketPrice),'color']= \
-             'rgb('+final_tbl.loc[(final_tbl[TBL_PRICE]>marketPrice),'colorintensity'].map(str) +',0,0)'
-    final_tbl.loc[(final_tbl[TBL_PRICE]<=marketPrice),'color']= \
-             'rgb(0,'+final_tbl.loc[(final_tbl[TBL_PRICE]<=marketPrice),'colorintensity'].map(str) +',0)'
+    marketPrice = final_tbl['market price']
+    final_tbl['colorintensity'] = final_tbl['n_unique_orders'].apply(calcColor)
+    final_tbl.loc[(final_tbl[TBL_PRICE] > marketPrice), 'color'] = \
+        'rgb(' + final_tbl.loc[(final_tbl[TBL_PRICE] > marketPrice), 'colorintensity'].map(str) + ',0,0)'
+    final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'color'] = \
+        'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'colorintensity'].map(str) + ',0)'
 
     tables[ticker] = final_tbl
     tables[ticker] = prepare_data(ticker)
@@ -152,7 +154,7 @@ def refreshTickers():
         currency = ticker.split("-")[0]
         thresh = THRESHOLDS.get(currency.upper(), 1.0)
         get_data(ticker, thresh)
-    sendCache=prepare_send()
+    sendCache = prepare_send()
 
 
 # begin building the dash itself
@@ -166,24 +168,24 @@ static_content_before = [
             'BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo', html.Br(),
             'LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'
             ]),
-    html.H3(html.A('GitHub Link (Click to support us by giving a star or request new features via "issues" tab)', href="https://github.com/pmaji/eth_python_tracker")),
+    html.H3(html.A('GitHub Link (Click to support us by giving a star or request new features via "issues" tab)',
+                   href="https://github.com/pmaji/eth_python_tracker")),
     html.H3(
-        'Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
+        'Legend: Bright colored mark = WHALE (high volume at one price point via one unique order). The bubbles get darker as the number of unique orders increases. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
     html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
- ]
+]
 
-
-static_content_after=dcc.Interval(
+static_content_after = dcc.Interval(
     id='main-interval-component',
     interval=2 * 1000  # in milliseconds for the automatic refresh; refreshes every 2 seconds
 )
-app.layout = html.Div(id='main_container',children=[
-     html.Div(static_content_before),
-     html.Div(id='graphs_Container'),
-     html.Div(static_content_after),
-  ])
+app.layout = html.Div(id='main_container', children=[
+    html.Div(static_content_before),
+    html.Div(id='graphs_Container'),
+    html.Div(static_content_after),
+])
 
 
 def prepare_data(ticker):
@@ -214,34 +216,37 @@ def prepare_data(ticker):
                 title='Order Size',
                 type='log',
                 autorange=True
-                ),
+            ),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest'
         )
     }
     return result
 
+
 def prepare_send():
-   lCache = []
-   cData=get_All_data()
-   for ticker in TICKERS:
-     graph= 'live-graph-' + ticker.lower().replace('-', '')
-     lCache.append(html.Br())
-     lCache.append(html.Br())
-     lCache.append(html.A(html.Button('Hide/ Show '+ticker), 
-       href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
-     lCache.append(dcc.Graph(
-                    id=graph, 
-                    figure=cData[ticker]
-                    ))
-   return lCache
+    lCache = []
+    cData = get_All_data()
+    for ticker in TICKERS:
+        graph = 'live-graph-' + ticker.lower().replace('-', '')
+        lCache.append(html.Br())
+        lCache.append(html.Br())
+        lCache.append(html.A(html.Button('Hide/ Show ' + ticker),
+                             href='javascript:(function(){if(document.getElementById("' + graph + '").style.display==""){document.getElementById("' + graph + '").style.display="none"}else{document.getElementById("' + graph + '").style.display=""}})()'))
+        lCache.append(dcc.Graph(
+            id=graph,
+            figure=cData[ticker]
+        ))
+    return lCache
+
 
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 @app.callback(Output('graphs_Container', 'children'),
-   events=[Event('main-interval-component', 'interval')])
+              events=[Event('main-interval-component', 'interval')])
 def update_Site_data():
-   return getSendCache()
+    return getSendCache()
+
 
 def round_sig(x, sig=3, overwrite=0, minimum=0):
     if (x == 0):
@@ -257,10 +262,13 @@ def round_sig(x, sig=3, overwrite=0, minimum=0):
 
 
 def calcColor(x):
-   response=round(400/x)
-   if response>255 : response=255
-   elif response<30 : response=30
-   return response
+    response = round(400 / x)
+    if response > 255:
+        response = 255
+    elif response < 30:
+        response = 30
+    return response
+
 
 if __name__ == '__main__':
     refreshTickers()
