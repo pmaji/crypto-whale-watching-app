@@ -27,6 +27,7 @@ GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKE
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
+sendCache = {}
 
 
 # creates a cache to speed up load time and facilitate refreshes
@@ -35,6 +36,9 @@ def get_data_cache(ticker):
 
 def get_All_data():
    return tables
+
+def getSendCache():
+   return sendCache
 
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
@@ -45,6 +49,7 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 # uniqueBorder is the border at wich orders are marked differently
 # range is the deviation visible from current price
 def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
+    global tables
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -137,10 +142,12 @@ def refreshWorker():
 
 
 def refreshTickers():
+    global sendCache
     for ticker in TICKERS:
         currency = ticker.split("-")[0]
         thresh = THRESHOLDS.get(currency.upper(), 1.0)
         get_data(ticker, thresh)
+    sendCache=prepare_send()
 
 
 # begin building the dash itself
@@ -166,7 +173,7 @@ for ticker in TICKERS:
     graph= 'live-graph-' + ticker.lower().replace('-', '')
     div_container.append(html.Br())
     div_container.append(html.Br())
-    div_container.append(html.A(html.Button('Hide/ Show '+ticker), 
+    div_container.append(html.A(html.Button('Hide '+ticker), 
       href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
     div_container.append(dcc.Graph(id=graph))
 
@@ -212,25 +219,27 @@ def prepare_data(ticker):
     }
     return result
 
+def prepare_send():
+   lCache = []
+   cData=get_All_data()
+   for ticker in TICKERS:
+     graph= 'live-graph-' + ticker.lower().replace('-', '')
+     lCache.append(html.Br())
+     lCache.append(html.Br())
+     lCache.append(html.A(html.Button('Hide '+ticker), 
+       href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
+     lCache.append(dcc.Graph(
+                    id=graph, 
+                    figure=cData[ticker]
+                    ))
+   return lCache
 
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 @app.callback(Output('graphs_Container', 'children'),
    events=[Event('main-interval-component', 'interval')])
 def update_Site_data():
-   div_container = []
-   cData=get_All_data()
-   for ticker in TICKERS:
-     graph= 'live-graph-' + ticker.lower().replace('-', '')
-     div_container.append(html.Br())
-     div_container.append(html.Br())
-     div_container.append(html.A(html.Button('Hide/ Show '+ticker), 
-       href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
-     div_container.append(dcc.Graph(
-                    id=graph, 
-                    figure=cData[ticker]
-                    ))
-   return div_container
+   return getSendCache()
 
 
 def round_sig(x, sig=3, overwrite=0, minimum=0):
