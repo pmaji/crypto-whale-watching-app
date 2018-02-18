@@ -42,7 +42,7 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 # threshold is to limit our view to only orders greater than or equal to the threshold size defined
 # uniqueBorder is the border at wich orders are marked differently
 # range is the deviation visible from current price
-def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025 , maxSize=32):
+def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minVolumePerc=0.01):
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -82,6 +82,13 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025 , maxSize=32):
 
     # transforms the table for a final time to craft the data view we need for analysis
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
+    
+    #Filter to just use data > Minimal Volume Percent
+    minVolume=final_tbl[TBL_VOLUME].sum() * minVolumePerc
+    final_tbl = final_tbl[(final_tbl[TBL_VOLUME] >= minVolume)]
+
+
+
     final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
     final_tbl[TBL_PRICE] = final_tbl.index
     final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, 2))
@@ -89,9 +96,12 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025 , maxSize=32):
     final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
     # print(final_tbl)
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
+
+    # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
     sizeFactor = maxSize/cMaxSize
     final_tbl['sqrt'] = final_tbl['sqrt'] * sizeFactor
+
     # making the tooltip column for our charts
     final_tbl['text'] = (
             "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
@@ -196,7 +206,11 @@ def update_data(ticker):
         'layout': go.Layout(
             # makes it so that title automatically updates with refreshed market price
             title=("The present market price of {} is: {}{}".format(ticker, symbol, str(data['market price'].iloc[0]))),
-            xaxis={'title': 'Order Size'},
+            xaxis=dict(
+                title='Order Size',
+                type='log',
+                autorange=True
+                ),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest'
         )
