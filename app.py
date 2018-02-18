@@ -27,12 +27,17 @@ GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKE
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
-
+sendCache = {}
 
 # creates a cache to speed up load time and facilitate refreshes
 def get_data_cache(ticker):
     return tables[ticker]
 
+def get_All_data():
+   return tables
+
+def getSendCache():
+   return sendCache
 
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
 
@@ -43,6 +48,7 @@ public_client = gdax.PublicClient()  # defines public client for all functions; 
 # uniqueBorder is the border at wich orders are marked differently
 # range is the deviation visible from current price
 def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
+    global tables
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -120,6 +126,7 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.025):
         'green'
 
     tables[ticker] = final_tbl
+    tables[ticker] = prepare_data(ticker)
     return tables[ticker]
 
 
@@ -134,10 +141,12 @@ def refreshWorker():
 
 
 def refreshTickers():
+    global sendCache
     for ticker in TICKERS:
         currency = ticker.split("-")[0]
         thresh = THRESHOLDS.get(currency.upper(), 1.0)
         get_data(ticker, thresh)
+    sendCache=prepare_send()
 
 
 # begin building the dash itself
@@ -145,7 +154,7 @@ app = dash.Dash()
 
 # simple layout that can be improved with better CSS later, but it does the job for now
 
-div_container = [
+static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
     html.H3('Donations greatly appreciated; will go towards hosting / development'),
     html.P(['ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49', html.Br(),
@@ -156,26 +165,23 @@ div_container = [
     html.H3(
         'Legend: Bright colored mark = 5 or more distinct orders at a price-point. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
     html.A(html.Button('Freeze all'),
-           #We create a link, containing a button. The link is JavaScript.
-           #1. It creates a Timeout to get the current highest Timeout/ Interval number
-           #2. It clears all Timeouts from the recieved highest num to 0.
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();"),#Same as above, except, that we reload to reinitialize Plotty correctly
-    # This line is for colorblind mode: 1. setInterval function, 2. Loop through all bubbles, 3. Get RGB
-    # 4. If Green=0 next bubble, 5. Blue=Green 6. Green = 0, 7. save new color code
-    html.A(html.Button('Colorblind mode'), href='javascript:setInterval(function(){var elems=document.getElementsByClassName("point");var amount=elems.length; var x=0;while (x<amount){var nElement=elems[x].style.fill;var rgb=nElement.split("(")[1].split(")")[0].split(",");if(parseInt(rgb[1])!=0){rgb[2]=rgb[1];rgb[1]=" 0";rgb="rgb("+rgb[0]+","+rgb[1]+","+rgb[2]+")";document.getElementsByClassName("point")[x].style.fill=rgb;}x++;}},50);')
-]
-for graphId in GRAPH_IDS:
-    div_container.append(dcc.Graph(id=graphId))
+    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
+ ]
 
-div_container.append(dcc.Interval(
-    id='interval-component',
+
+static_content_after=dcc.Interval(
+    id='main-interval-component',
     interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
-))
-app.layout = html.Div(div_container)
+)
+app.layout = html.Div(id='main_container',children=[
+     html.Div(static_content_before),
+     html.Div(id='graphs_Container'),
+     html.Div(static_content_after),
+  ])
 
 
-def update_data(ticker):
+def prepare_data(ticker):
     data = get_data_cache(ticker)
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
@@ -206,24 +212,27 @@ def update_data(ticker):
     }
     return result
 
+def prepare_send():
+   lCache = []
+   cData=get_All_data()
+   for ticker in TICKERS:
+     graph= 'live-graph-' + ticker.lower().replace('-', '')
+     lCache.append(html.Br())
+     lCache.append(html.Br())
+     lCache.append(html.A(html.Button('Hide/ Show '+ticker), 
+       href='javascript:(function(){if(document.getElementById("'+graph+'").style.display==""){document.getElementById("'+graph+'").style.display="none"}else{document.getElementById("'+graph+'").style.display=""}})()'))
+     lCache.append(dcc.Graph(
+                    id=graph, 
+                    figure=cData[ticker]
+                    ))
+   return lCache
 
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
-
-# Function generator
-def create_cb_func(pGraph):
-    def cb():
-        return update_data(pGraph)
-
-    return cb
-
-
-# Loop through graphs and append callback
-for ticker in TICKERS:
-    graph = 'live-graph-' + ticker.lower().replace('-', '')
-    app.callback(Output(graph, 'figure'),
-                 events=[Event('interval-component', 'interval')])(create_cb_func(ticker))
-
+@app.callback(Output('graphs_Container', 'children'),
+   events=[Event('main-interval-component', 'interval')])
+def update_Site_data():
+   return getSendCache()
 
 def round_sig(x, sig=3, overwrite=0, minimum=0):
     if (x == 0):
