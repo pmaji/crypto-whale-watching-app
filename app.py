@@ -177,7 +177,7 @@ static_content_before = [
 
 static_content_after=dcc.Interval(
     id='main-interval-component',
-    interval=4 * 1000  # in milliseconds for the automatic refresh; refreshes every 4 seconds
+    interval=2 * 1000  # in milliseconds for the automatic refresh; refreshes every 2 seconds
 )
 app.layout = html.Div(id='main_container',children=[
      html.Div(static_content_before),
