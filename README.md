@@ -32,7 +32,7 @@ Anyone interested with Python 3.6 installed can download the app.py or clone the
 
 ## Contribution Rules
 
-All are welcome to contribute issues / pull-requests to the codebase. All I ask is that you include a detailed description of your contribution, that your code is thoroughly-commented, and that you test your contribution locally with the most recent version of the Master branch integrated prior to submitting the PR.
+All are welcome to contribute issues / pull-requests to the codebase. All I ask is that you include a detailed description of your contribution, that your code is thoroughly-commented, and that you test your contribution locally with the most recent version of the Master branch integrated prior to submitting the PR. We also have a Telegram chat for major contributors so if you want to be added to that first submit a contribution and then message me on Telegram (my public ID is the same as my GitHub ID).
 
 ## Support Needed
 
