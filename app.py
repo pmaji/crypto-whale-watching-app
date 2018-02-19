@@ -190,10 +190,16 @@ static_content_before = [
             'BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo', html.Br(),
             'LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'
             ]),
-    html.H3(html.A('GitHub Link (Click to support us by giving a star or request new features via "issues" tab)',
+    html.H3(html.A('GitHub Link (Click to support us by giving a star; request new features via "issues" tab)',
                    href="https://github.com/pmaji/eth_python_tracker")),
     html.H3(
-        'Legend: Bright colored mark = WHALE (high volume at one price point via one unique order). The bubbles get darker as the number of unique orders increases. Hover over bubbles for more info. Click "Freeze all" button to halt refresh.'),
+        'Legend: Bright colored mark = WHALE (high volume price point with one unique order). '
+        'Bubbles get darker as the number of unique orders increases. '
+        'Hover over bubbles for more info. Volume (x-axis) on log-scale. '
+        'Click "Freeze all" button to halt refresh, '
+        'and hide/show buttons to pick which currency pairs to display. '
+        'Only displays orders greater than or equal to 1% of the volume of the portion of the order book displayed.'
+        ' See GitHub for further details.'),
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
     html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
@@ -244,7 +250,7 @@ def prepare_data(ticker):
             # now code to ensure the sizing is right
             autosize=False,
             width=1000,
-            height=600,
+            height=550,
             margin=go.Margin(
                 l=100,
                 r=50,
