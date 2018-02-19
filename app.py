@@ -7,6 +7,7 @@ import dash
 
 from dash.dependencies import Output, Event
 from math import log10, floor
+from datetime import datetime
 import dash_core_components as dcc
 import dash_html_components as html
 
@@ -29,6 +30,7 @@ GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKE
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
+timeStamps = {} # For storing timestamp of Data Refresh
 sendCache = {}
 
 
@@ -59,7 +61,7 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
     # maxSize is a parameter to limit the maximum size of the bubbles in the viz
     # minVolumePerc is used to set the minimum volume needed for a price-point to be included in the viz
 
-    global tables
+    global tables, timeStamps
     ob_points=30 # the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
@@ -164,26 +166,23 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
         'rgb(' + final_tbl.loc[(final_tbl[TBL_PRICE] > marketPrice), 'colorintensity'].map(str) + ',0,0)'
     final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'color'] = \
         'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'colorintensity'].map(str) + ',0)'
-
+    timeStamps[ticker] = datetime.now().strftime("%H:%M:%S")
     tables[ticker] = final_tbl
     tables[ticker] = prepare_data(ticker)
     return tables[ticker]
 
 
 def refreshWorker():
+    global sendCache
     # establishes a separate refresh schedule for user vs. server makes app resilient to DDOS attacks / refresh crashes
     while True:
-        refreshTickers()
-        time.sleep(5)
+        for ticker in TICKERS:
+           time.sleep(1)
+           currency = ticker.split("-")[0]
+           thresh = THRESHOLDS.get(currency.upper(), 1.0)
+           get_data(ticker, thresh)
+           sendCache = prepare_send()
 
-
-def refreshTickers():
-    global sendCache
-    for ticker in TICKERS:
-        currency = ticker.split("-")[0]
-        thresh = THRESHOLDS.get(currency.upper(), 1.0)
-        get_data(ticker, thresh)
-    sendCache = prepare_send()
 
 
 # begin building the dash itself
@@ -246,7 +245,7 @@ def prepare_data(ticker):
         ],
         'layout': go.Layout(
             # title automatically updates with refreshed market price
-            title=("The present market price of {} is: {}{}".format(ticker, symbol, str(data['market price'].iloc[0]))),
+            title=("The present market price of {} is: {}{} at {}".format(ticker, symbol, str(data['market price'].iloc[0]),timeStamps[ticker])),
             xaxis=dict(
                 title='Order Size',
                 type='log',
@@ -254,6 +253,14 @@ def prepare_data(ticker):
             ),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest',
+            # now code to ensure the sizing is right
+            margin=go.Margin(
+                l=75,
+                r=75,
+                b=50,
+                t=50,
+                pad=4
+            ),
             paper_bgcolor='#c7c7c7',
             plot_bgcolor='#c7c7c7',
             # adding the horizontal reference line at market price
@@ -325,7 +332,13 @@ def calcColor(x):
 
 
 if __name__ == '__main__':
-    refreshTickers()
+    # Initial Load of Data
+    for ticker in TICKERS:
+       print ("Initializing " + ticker)
+       time.sleep(1)
+       currency = ticker.split("-")[0]
+       thresh = THRESHOLDS.get(currency.upper(), 1.0)
+       get_data(ticker, thresh)
     t = threading.Thread(target=refreshWorker)
     t.daemon = True
     t.start()
