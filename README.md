@@ -26,7 +26,7 @@ The present version tracks all major pairings (ETH/USD; ETH/BTC; BTC/USD; LTC/US
 
 The size of each observation is determined algorithmically using a transformation of the square root of the volume of all orders at that particular price-point calibrated so that the bubbles never become unreasonably large or small. The color-coding allows for easy identification of whales, as described in the section above. 
 
-Note: all of these limitations--i.e. the volume minimum, the order book limitations, etc., are paramterized within the app.py code and thus can be easily changed if so desired.
+Note: all of these limitations--i.e. the volume minimum, the order book limitations, etc., are parameterized within the app.py code and thus can be easily changed if so desired.
 
 Anyone interested with Python 3.6 installed can download the app.py or clone the repo and run the app locally, just check to be sure you have the few required modules installed (see requirements.txt for this). In addition to local hosting, members of the Ethereum community have volunteered to host versions on their own personal servers. A web-hosted version of the app [can be accessed here.](http://whales.cracklord.com/) If for any reason the page does not load, feel free to let us know via an issue, but more than likely it is because we are updating to the newest version of the codebase or performing maintenance.   
 
@@ -38,7 +38,7 @@ All are welcome to contribute issues / pull-requests to the codebase. All I ask 
 
 While this project has grown in popularity a great deal as of late, there is still much to be done. Below is a summary of the main needs that we have presently with which anyone can assist (this is a community project after all!):
 
-1. Donations needed for host-fees and development work (presently raising money for AWS migration)
+1. Donations needed for host-fees and development work (presently raising money for AWS migration):
 
      1. **ETH donations address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49**
      
