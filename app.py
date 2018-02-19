@@ -254,17 +254,6 @@ def prepare_data(ticker):
             ),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest',
-            # now code to ensure the sizing is right
-            autosize=False,
-            width=1000,
-            height=550,
-            margin=go.Margin(
-                l=100,
-                r=50,
-                b=100,
-                t=100,
-                pad=4
-            ),
             paper_bgcolor='#c7c7c7',
             plot_bgcolor='#c7c7c7',
             # adding the horizontal reference line at market price
