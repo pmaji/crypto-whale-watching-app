@@ -2,7 +2,7 @@
 
 # modules
 
-# dash-related libraries for app itself
+# dash-related libraries
 import dash
 
 from dash.dependencies import Output, Event
@@ -16,13 +16,14 @@ import pandas as pd
 import gdax
 import numpy as np
 
+# modules added by contributors
 import time
 import threading
 from queue import Queue
 
+# creating variables to reduce hard-coding later on / facilitate later paramterization
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 THRESHOLDS = {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
-
 TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE = 'price'
@@ -44,39 +45,46 @@ def getSendCache():
     return sendCache
 
 
-public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX
+public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX API
 
-# function to get data from GDAX to be referenced in our call-back later
-# ticker a string to particular Ticker (e.g. ETH-USD)
-# threshold is to limit our view to only orders greater than or equal to the threshold size defined
-# uniqueBorder is the border at wich orders are marked differently
-# range is the deviation visible from current price
 
-def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minVolumePerc=0.01):
+
+
+def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
+
+    # function to get data from GDAX to be referenced in our call-back later
+    # ticker a string to particular Ticker (e.g. ETH-USD)
+    # threshold is to limit our view to only orders greater than or equal to the threshold size defined
+    # range is the deviation visible from current price
+    # maxSize is a parameter to limit the maximum size of the bubbles in the viz
+    # minVolumePerc is used to set the minimum volume needed for a price-point to be included in the viz
+
     global tables
-    ob_points=30 #the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
+    ob_points=30 # the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
 
-    # pulls in the order book data from GDAX; split by ask vs bid
+    # pulls in the order book data from GDAX; split orders by ask vs. bid
     order_book = public_client.get_product_order_book(ticker, level=3)
     ask_tbl = pd.DataFrame(data=order_book['asks'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
     bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
 
-    # building subsetted table for ask data only
-    # sell side (would be Magma)
+    # building subsetted table for ask data only (sell-side)
     ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
     ask_tbl[TBL_VOLUME] = pd.to_numeric(ask_tbl[TBL_VOLUME])
     first_ask = float(ask_tbl.iloc[1, 0])
     perc_above_first_ask = ((1.0 + range) * first_ask)
-    # limits the size of the table so that we only look at orders 2.5% above and under market price
+
+    # limits the size of the table so that we only look at orders 5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
     dif_ask = perc_above_first_ask - first_ask
+
+    # explanatory comment here to come
     ob_step = dif_ask/ob_points
     ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
-    # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
+    # Following is creating a new tbl 'ob_bid' which contains the summed volume and adress-count from current price to target price
     i=1
     while  i<ob_points:
         current_border= first_ask+(i*ob_step)
@@ -85,15 +93,17 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
         ob_ask.loc[i-1] = [current_border,current_volume,current_adresses]
         i+=1
 
-    # building subsetted table for bid data only
-    # buy side (would be Viridis)
+    # building subsetted table for bid data only (buy-side)
     bid_tbl[TBL_PRICE] = pd.to_numeric(bid_tbl[TBL_PRICE])
     bid_tbl[TBL_VOLUME] = pd.to_numeric(bid_tbl[TBL_VOLUME])
     first_bid = float(bid_tbl.iloc[1, 0])
     perc_above_first_bid = ((1.0 - range) * first_bid)
-    # limits the size of the table so that we only look at orders 2.5% above and under market price
+
+    # limits the size of the table so that we only look at orders 5% above and under market price
     bid_tbl = bid_tbl[(bid_tbl[TBL_PRICE] >= perc_above_first_bid)]
     dif_bid = first_bid - perc_above_first_bid
+
+    # explanatory comment here to come (similar to line 85 comment)
     ob_step = dif_bid/ob_points
     ob_bid = pd.DataFrame(columns=[TBL_PRICE, 'volume', 'address'])
     # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
@@ -126,11 +136,11 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, 2))
     final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args=(1, 2))
     final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
-    # print(final_tbl)
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
 
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
+    # nifty way of ensuring the size of the bubbles is proportional and reasonable
     sizeFactor = maxSize / cMaxSize
     final_tbl['sqrt'] = final_tbl['sqrt'] * sizeFactor
 
@@ -147,7 +157,7 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     final_tbl['market price'] = final_tbl['market price'].astype(float)
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
-    # Buys are green, Sells are Red. Phishy ones are highlighted by beeing bright, detected by unqiue orders.
+    # Buys are green, Sells are Red. Probably WHALES are highlighted by being brighter, detected by unqiue order count.
     marketPrice = final_tbl['market price']
     final_tbl['colorintensity'] = final_tbl['n_unique_orders'].apply(calcColor)
     final_tbl.loc[(final_tbl[TBL_PRICE] > marketPrice), 'color'] = \
@@ -160,11 +170,8 @@ def get_data(ticker, threshold=1.0, uniqueBorder=5, range=0.05, maxSize=32, minV
     return tables[ticker]
 
 
-# establishes a refresh schedule separate from the user's interaction
-# these two steps make the app resilient to DDOS attacks / crashes due to too many manual refreshes
-
-
 def refreshWorker():
+    # establishes a separate refresh schedule for user vs. server makes app resilient to DDOS attacks / refresh crashes
     while True:
         refreshTickers()
         time.sleep(5)
@@ -238,7 +245,7 @@ def prepare_data(ticker):
             )
         ],
         'layout': go.Layout(
-            # makes it so that title automatically updates with refreshed market price
+            # title automatically updates with refreshed market price
             title=("The present market price of {} is: {}{}".format(ticker, symbol, str(data['market price'].iloc[0]))),
             xaxis=dict(
                 title='Order Size',
@@ -263,17 +270,16 @@ def prepare_data(ticker):
             # adding the horizontal reference line at market price
             shapes=[{
                 # Line Horizontal
-
-            'type': 'line',
-            'x0': data[TBL_VOLUME].min(),
-            'y0': data['market price'].iloc[0],
-            'x1': data[TBL_VOLUME].max(),
-            'y1': data['market price'].iloc[0],
-            'line': {
-                'color': 'rgb(0, 0, 0)',
-                'width': 2,
-                'dash': 'dash',
-                    }
+                'type': 'line',
+                'x0': data[TBL_VOLUME].min(),
+                'y0': data['market price'].iloc[0],
+                'x1': data[TBL_VOLUME].max(),
+                'y1': data['market price'].iloc[0],
+                'line': {
+                    'color': 'rgb(0, 0, 0)',
+                    'width': 2,
+                    'dash': 'dash',
+                        }
                 }]
 
         )
@@ -305,6 +311,7 @@ def update_Site_data():
     return getSendCache()
 
 
+# explanatory comment here to come
 def round_sig(x, sig=3, overwrite=0, minimum=0):
     if (x == 0):
         return 0.0
@@ -318,6 +325,7 @@ def round_sig(x, sig=3, overwrite=0, minimum=0):
             return round(x, digits)
 
 
+# explanatory comment here to come
 def calcColor(x):
     response = round(400 / x)
     if response > 255:
