@@ -33,7 +33,7 @@ TBL_VOLUME = 'volume'
 tables = {}
 shape_bid = {}
 shape_ask = {}
-timeStamps = {} # For storing timestamp of Data Refresh
+timeStamps = {}  # For storing timestamp of Data Refresh
 sendCache = {}
 
 
@@ -53,10 +53,7 @@ def getSendCache():
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX API
 
 
-
-
 def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
-
     # function to get data from GDAX to be referenced in our call-back later
     # ticker a string to particular Ticker (e.g. ETH-USD)
     # threshold is to limit our view to only orders greater than or equal to the threshold size defined
@@ -65,7 +62,7 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
     # minVolumePerc is used to set the minimum volume needed for a price-point to be included in the viz
 
     global tables, timeStamps, shape_bid, shape_ask
-    ob_points=30 # the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
+    ob_points = 30  # the Amount of Points (1 time for buy, 1 time for sell) for Order Book Graphic
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
@@ -95,33 +92,36 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
     dif_bid = first_bid - perc_above_first_bid
 
     # explanatory comment here to come
-    ob_step = dif_ask/ob_points
+    ob_step = dif_ask / ob_points
     ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
     # explanatory comment here to come (similar to line 85 comment)
-    ob_step = dif_bid/ob_points
+    ob_step = dif_bid / ob_points
     ob_bid = pd.DataFrame(columns=[TBL_PRICE, 'volume', 'address'])
 
     # Following is creating a new tbl 'ob_bid' which contains the summed volume and adress-count from current price to target price
-    i=1
-    while  i<ob_points:
-        current_border= first_ask+(i*ob_step)
-        current_volume=ask_tbl.loc[(ask_tbl[TBL_PRICE]>= first_ask)&(ask_tbl[TBL_PRICE] < current_border),TBL_VOLUME].sum()
-        current_adresses=ask_tbl.loc[(ask_tbl[TBL_PRICE] >= first_ask)&(ask_tbl[TBL_PRICE] < current_border),'address'].sum()
-        ob_ask.loc[i-1] = [current_border,current_volume,current_adresses]
-        i+=1
+    i = 1
+    while i < ob_points:
+        current_border = first_ask + (i * ob_step)
+        current_volume = ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_border), TBL_VOLUME].sum()
+        current_adresses = ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_border), 'address'].sum()
+        ob_ask.loc[i - 1] = [current_border, current_volume, current_adresses]
+        i += 1
     # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
-    i=1
-    while  i<ob_points:
-        current_border= first_bid-(i*ob_step)
-        current_volume=bid_tbl.loc[(bid_tbl[TBL_PRICE] <= first_bid)&(bid_tbl[TBL_PRICE] > current_border),TBL_VOLUME].sum()
-        current_adresses=bid_tbl.loc[(bid_tbl[TBL_PRICE] <= first_bid)&(bid_tbl[TBL_PRICE] > current_border),'address'].sum()
-        ob_bid.loc[i-1] = [current_border,current_volume,current_adresses]
-        i+=1
+    i = 1
+    while i < ob_points:
+        current_border = first_bid - (i * ob_step)
+        current_volume = bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_border), TBL_VOLUME].sum()
+        current_adresses = bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_border), 'address'].sum()
+        ob_bid.loc[i - 1] = [current_border, current_volume, current_adresses]
+        i += 1
 
     # flip the bid table so that the merged full_tbl is in logical order
     bid_tbl = bid_tbl.iloc[::-1]
-    
-    
+
     # append the buy and sell side tables to create one cohesive table
     fulltbl = bid_tbl.append(ask_tbl)
     minVolume = fulltbl[TBL_VOLUME].sum() * minVolumePerc
@@ -143,23 +143,25 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
 
     # Calculation for Volume grouping
-    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME:np.sum}).rename(
-                                 columns={'amin':'min_Price','amax' : 'max_Price','sum' : TBL_VOLUME})
+    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
+        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
     vol_grp_bid.columns = vol_grp_bid.columns.droplevel(0)
-    vol_grp_bid = vol_grp_bid[((vol_grp_bid[TBL_VOLUME] >= minVolume) & (vol_grp_bid['count'] >= 2.0)& (vol_grp_bid['count'] < 70.0))]
-    vol_grp_bid['unique']=vol_grp_bid.index.get_level_values(TBL_VOLUME)
-    vol_grp_bid['unique']=vol_grp_bid['unique'].apply(round_sig, args=(3,))
-    vol_grp_bid['text']=(vol_grp_bid['count'].map(str)+"*"+vol_grp_bid['unique'].map(str))
-    shape_bid[ticker]= vol_grp_bid
+    vol_grp_bid = vol_grp_bid[
+        ((vol_grp_bid[TBL_VOLUME] >= minVolume) & (vol_grp_bid['count'] >= 2.0) & (vol_grp_bid['count'] < 70.0))]
+    vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
+    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
+    vol_grp_bid['text'] = (vol_grp_bid['count'].map(str) + "*" + vol_grp_bid['unique'].map(str))
+    shape_bid[ticker] = vol_grp_bid
 
-    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME:np.sum}).rename(
-                                 columns={'amin':'min_Price','amax' : 'max_Price','sum' : TBL_VOLUME})
+    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
+        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
     vol_grp_ask.columns = vol_grp_ask.columns.droplevel(0)
-    vol_grp_ask = vol_grp_ask[((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
-    vol_grp_ask['unique']=vol_grp_ask.index.get_level_values(TBL_VOLUME)
-    vol_grp_ask['unique']=vol_grp_ask['unique'].apply(round_sig, args=(3,))
-    vol_grp_ask['text']=(vol_grp_ask['count'].map(str)+"*"+vol_grp_ask['unique'].map(str))
-    shape_ask[ticker]= vol_grp_ask
+    vol_grp_ask = vol_grp_ask[
+        ((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
+    vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
+    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
+    vol_grp_ask['text'] = (vol_grp_ask['count'].map(str) + "*" + vol_grp_ask['unique'].map(str))
+    shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
     # nifty way of ensuring the size of the bubbles is proportional and reasonable
@@ -197,12 +199,11 @@ def refreshWorker():
     # establishes a separate refresh schedule for user vs. server makes app resilient to DDOS attacks / refresh crashes
     while True:
         for ticker in TICKERS:
-           time.sleep(1)
-           currency = ticker.split("-")[0]
-           thresh = THRESHOLDS.get(currency.upper(), 1.0)
-           get_data(ticker, thresh)
-           sendCache = prepare_send()
-
+            time.sleep(1)
+            currency = ticker.split("-")[0]
+            thresh = THRESHOLDS.get(currency.upper(), 1.0)
+            get_data(ticker, thresh)
+            sendCache = prepare_send()
 
 
 # begin building the dash itself
@@ -219,12 +220,14 @@ static_content_before = [
     html.H3(html.A('GitHub Link (Click to support us by giving a star; request new features via "issues" tab)',
                    href="https://github.com/pmaji/eth_python_tracker")),
     html.H3(
-        'Legend: Bright colored mark = WHALE (high volume price point with one unique order). '
+        'Legend: Bright colored mark = likely WHALE '
+        '(high volume price point via 1 unique order, or many identical medium-sized orders in a ladder). '
         'Bubbles get darker as the number of unique orders increases. '
         'Hover over bubbles for more info. Volume (x-axis) on log-scale. '
         'Click "Freeze all" button to halt refresh, '
         'and hide/show buttons to pick which currency pairs to display. '
-        'Only displays orders greater than or equal to 1% of the volume of the portion of the order book displayed.'
+        'Only displays orders greater than or equal to 1% of the volume of the portion of the order book displayed. '
+        'If annotations overlap or bubbles cluster click "Freeze all" and then zoom in on the area of interest.'
         ' See GitHub for further details.'),
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
@@ -246,56 +249,60 @@ def prepare_data(ticker):
     data = get_data_cache(ticker)
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
-    x_min= min([shape_bid[ticker]['volume'].min(),shape_ask[ticker]['volume'].min(),data[TBL_VOLUME].min()])
-    x_max= max([shape_bid[ticker]['volume'].max(),shape_ask[ticker]['volume'].max(),data[TBL_VOLUME].max()])
-    max_unique= max([shape_bid[ticker]['unique'].max(),shape_ask[ticker]['unique'].max()])
-    width_factor=15/max_unique
-    market_price=data['market price'].iloc[0]
-    shape_arr=[dict(
-                # Line Horizontal
-                type= 'line',
-                x0= x_min, y0= market_price,
-                x1= x_max, y1= market_price,
-                line= dict(color= 'rgb(0, 0, 0)',width= 2,dash= 'dash')
-                )]
-    annot_arr=[dict(
-         x=log10(x_max),y=market_price,xref='x',yref='y',
-         text=str(market_price) + symbol,
-         showarrow=True,arrowhead=7,ax=20,ay=0,
-         bgcolor='rgb(0,0,255)',font={'color':'#ffffff'}
-         )]
+    x_min = min([shape_bid[ticker]['volume'].min(), shape_ask[ticker]['volume'].min(), data[TBL_VOLUME].min()])
+    x_max = max([shape_bid[ticker]['volume'].max(), shape_ask[ticker]['volume'].max(), data[TBL_VOLUME].max()])
+    max_unique = max([shape_bid[ticker]['unique'].max(), shape_ask[ticker]['unique'].max()])
+    width_factor = 15 / max_unique
+    market_price = data['market price'].iloc[0]
+    shape_arr = [dict(
+        # Line Horizontal
+        type='line',
+        x0=x_min, y0=market_price,
+        x1=x_max, y1=market_price,
+        line=dict(color='rgb(0, 0, 0)', width=2, dash='dash')
+    )]
+    annot_arr = [dict(
+        x=log10(x_max), y=market_price, xref='x', yref='y',
+        text=str(market_price) + symbol,
+        showarrow=True, arrowhead=7, ax=20, ay=0,
+        bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}
+    )]
     for index, row in shape_bid[ticker].iterrows():
-       cWidth= row['unique']*width_factor
-       vol=row[TBL_VOLUME]
-       posY=row['min_Price']
-       if cWidth > 15: cWidth=15
-       elif cWidth < 2: cWidth=2
-       shape_arr.append(dict(type= 'line',
-                opacity=0.5,
-                x0= vol,y0= row['min_Price'],
-                x1= vol,y1= row['max_Price'],
-                line= dict(color= 'rgb(0, 255, 0)',width= cWidth)))
-       annot_arr.append(dict(
-           x=log10(vol),y=posY,xref='x',yref='y',
-           text=row['text'],textangle=randint(300,340),
-           showarrow=True,arrowhead=5,ax=(randint(25,45)*-1),ay=(randint(10,40)*-1),
-           bgcolor='rgb(0,0,255)',font={'color':'#ffffff'},opacity=0.5))
+        cWidth = row['unique'] * width_factor
+        vol = row[TBL_VOLUME]
+        posY = row['min_Price']
+        if cWidth > 15:
+            cWidth = 15
+        elif cWidth < 2:
+            cWidth = 2
+        shape_arr.append(dict(type='line',
+                              opacity=0.5,
+                              x0=vol, y0=row['min_Price'],
+                              x1=vol, y1=row['max_Price'],
+                              line=dict(color='rgb(0, 255, 0)', width=cWidth)))
+        annot_arr.append(dict(
+            x=log10(vol), y=posY, xref='x', yref='y',
+            text=row['text'], textangle=randint(300, 340),
+            showarrow=True, arrowhead=5, ax=(randint(25, 45) * -1), ay=(randint(10, 40) * -1),
+            bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}, opacity=0.5))
     for index, row in shape_ask[ticker].iterrows():
-       cWidth= row['unique']*width_factor
-       vol=row[TBL_VOLUME]
-       posY=row['max_Price']
-       if cWidth > 15: cWidth=15
-       elif cWidth < 2: cWidth=2
-       shape_arr.append(dict(type= 'line',
-                opacity=0.5,
-                x0= vol,y0= row['min_Price'],
-                x1= vol,y1= row['max_Price'],
-                line= dict(color= 'rgb(255, 0, 0)',width= cWidth)))
-       annot_arr.append(dict(
-           x=log10(vol),y=posY,xref='x',yref='y',
-           text=row['text'],textangle=randint(300,340),
-           showarrow=True,arrowhead=5,ax=(randint(25,45)*-1),ay=(randint(10,40)),
-           bgcolor='rgb(0,0,255)',font={'color':'#ffffff'},opacity=0.5))
+        cWidth = row['unique'] * width_factor
+        vol = row[TBL_VOLUME]
+        posY = row['max_Price']
+        if cWidth > 15:
+            cWidth = 15
+        elif cWidth < 2:
+            cWidth = 2
+        shape_arr.append(dict(type='line',
+                              opacity=0.5,
+                              x0=vol, y0=row['min_Price'],
+                              x1=vol, y1=row['max_Price'],
+                              line=dict(color='rgb(255, 0, 0)', width=cWidth)))
+        annot_arr.append(dict(
+            x=log10(vol), y=posY, xref='x', yref='y',
+            text=row['text'], textangle=randint(300, 340),
+            showarrow=True, arrowhead=5, ax=(randint(25, 45) * -1), ay=(randint(10, 40)),
+            bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}, opacity=0.5))
     result = {
         'data': [
             go.Scatter(
@@ -315,7 +322,9 @@ def prepare_data(ticker):
         ],
         'layout': go.Layout(
             # title automatically updates with refreshed market price
-            title=("The present market price of {} is: {}{} at {}".format(ticker, symbol, str(data['market price'].iloc[0]),timeStamps[ticker])),
+            title=("The present market price of {} is: {}{} at {}".format(ticker, symbol,
+                                                                          str(data['market price'].iloc[0]),
+                                                                          timeStamps[ticker])),
             xaxis=dict(
                 title='Order Size',
                 type='log',
@@ -393,11 +402,11 @@ def calcColor(x):
 if __name__ == '__main__':
     # Initial Load of Data
     for ticker in TICKERS:
-       print ("Initializing " + ticker)
-       time.sleep(1)
-       currency = ticker.split("-")[0]
-       thresh = THRESHOLDS.get(currency.upper(), 1.0)
-       get_data(ticker, thresh)
+        print("Initializing " + ticker)
+        time.sleep(1)
+        currency = ticker.split("-")[0]
+        thresh = THRESHOLDS.get(currency.upper(), 1.0)
+        get_data(ticker, thresh)
     t = threading.Thread(target=refreshWorker)
     t.daemon = True
     t.start()
