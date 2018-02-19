@@ -1,6 +1,6 @@
 ## Introduction
 
-Welcome! This is a Python-based Dash app meant to track whale activity in buy / sell walls on crpyto-currency exchanges (presently just operational for GDAX, but more to come). This document aims to explain the purpose, functionality, and future of this project. Please do share this with your fellow coders / traders, donate via the donation addresses included in the "Support Needed" section below, and contribute to the future of this project by calling out issues, requesting new features, and submitting pull requests to improve the app.
+Welcome! This is a Python-based Dash app meant to track whale activity in buy / sell walls on crypto-currency exchanges (presently just operational for GDAX, but more to come). This document aims to explain the purpose, functionality, and future of this project. Please do share this with your fellow coders / traders, donate via the donation addresses included in the "Support Needed" section below, and contribute to the future of this project by calling out issues, requesting new features, and submitting pull requests to improve the app.
 
 
 ## What's the point of this app?
