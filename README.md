@@ -17,7 +17,7 @@ This difference is quite important, as it impacts how quickly walls can be pulle
 
 In addition to the main views which provide at-a-glance information, users can freeze the live refresh within the app in order to zoom in on particular sections of the order book, or to take better advantage of the tooltip capabilities of the Plotly visualization. Hover over any particular price-point as shown in the screenshot below to see a tooltip that displays helpful information, including how many unique orders are behind that particular price-point bubble. 
 
-![Tooltip UI](https://raw.githubusercontent.com/pmaji/eth_python_tracker/master/screenshots/ui_tooltip_screenshot.JPG)
+![Tooltip UI](https://raw.githubusercontent.com/pmaji/crypto-whale-whatching-app/master/screenshots/ui_tooltip_screenshot.JPG)
 
 
 ## A Few Technical Details
