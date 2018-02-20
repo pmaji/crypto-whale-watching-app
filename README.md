@@ -17,12 +17,12 @@ This difference is quite important, as it impacts how quickly walls can be pulle
 
 This is perhaps the most important question when it comes to the purpose of this app. We have iterated on this many times, and have arrived at an algorithmic definition that spots 2 types of whales:
 
-* Single Price-Point Whales
+* Single Price-Point Whales:
      * Place one large order at a single price-point 
      * Example: 500 ETH for sale at $1000 via 1 unique order
      * Represented via a bubble in the vizualization.
      * Tooltip includes order pricepoint, volume, and number of unique orders
-* Ladder Price-Point Whales
+* Ladder Price-Point Whales:
      * Place many medium-sized orders for identical volume increasing in price
      * Example: 500 total ETH for sale starting at $900 and spanning until $1000 via 10 unique 50-ETH orders
      * Represented via a linebar spanning the range of the ladder
