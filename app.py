@@ -150,7 +150,7 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
         ((vol_grp_bid[TBL_VOLUME] >= minVolume) & (vol_grp_bid['count'] >= 2.0) & (vol_grp_bid['count'] < 70.0))]
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
     vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
-    vol_grp_bid['text'] = (vol_grp_bid['count'].map(str) + "*" + vol_grp_bid['unique'].map(str))
+    vol_grp_bid['text'] = (vol_grp_bid['unique'].map(str) + "*" + vol_grp_bid['count'].map(str))
     shape_bid[ticker] = vol_grp_bid
 
     vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -160,7 +160,7 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
         ((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
     vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
-    vol_grp_ask['text'] = (vol_grp_ask['count'].map(str) + "*" + vol_grp_ask['unique'].map(str))
+    vol_grp_ask['text'] = (vol_grp_ask['unique'].map(str) + "*" + vol_grp_ask['count'].map(str))
     shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
