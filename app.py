@@ -398,6 +398,28 @@ def calcColor(x):
         response = 30
     return response
 
+def watchdog():
+   tWorker = threading.Thread(target=refreshWorker)
+   tWorker.daemon = True
+   tWorker.start()
+   tServer = threading.Thread(target=serverThread)
+   tServer.daemon = False
+   tServer.start()
+   while True:
+      time.sleep(1)
+      if not tWorker.isAlive():
+         print("Watchdog detected dead Worker, restarting")
+         tWorker = threading.Thread(target=refreshWorker)
+         tWorker.daemon = True
+         tWorker.start()
+      if not tServer.isAlive():
+         print("Watchdog detected dead Server, restarting")
+         tServer = threading.Thread(target=serverThread)
+         tServer.daemon = False
+         tServer.start()
+
+def serverThread():
+   app.run_server(host='0.0.0.0')
 
 if __name__ == '__main__':
     # Initial Load of Data
@@ -407,8 +429,6 @@ if __name__ == '__main__':
         currency = ticker.split("-")[0]
         thresh = THRESHOLDS.get(currency.upper(), 1.0)
         get_data(ticker, thresh)
-    t = threading.Thread(target=refreshWorker)
-    t.daemon = True
-    t.start()
+    watchdog()
 
-app.run_server(host='0.0.0.0')
+
