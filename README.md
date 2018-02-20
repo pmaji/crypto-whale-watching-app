@@ -7,7 +7,7 @@ Welcome! This is a Python-based Dash app meant to track whale activity in buy / 
 
 Presently, GDAX allows users to see the buy and sell limit order volume via the "depth chart" shown below. 
 
-![GDAX Depth Chart](https://raw.githubusercontent.com/pmaji/eth_python_tracker/master/screenshots/gdax_depth_chart.JPG)
+<img src="https://raw.githubusercontent.com/pmaji/eth_python_tracker/master/screenshots/gdax_depth_chart.JPG" width="700" height="300">
 
 The problem with this is that the depth chart does not tell us where the volume behind buy and sell walls is coming from. It could be from a few whales seeking to manipulate the market, or it could be from a large number of individuals who have placed orders around a modal point. In technical terms, there is no way to see how much of present resistance or support levels are due to individuals vs. group clustering. 
 
@@ -41,7 +41,7 @@ As can be seen from the UI screenshot below, for each currency pairing the user 
 
 In addition to the main views which provide at-a-glance information about the largest orders, users can freeze the live refresh within the app in order to zoom in on particular sections of the order book, or to take better advantage of the tooltip capabilities of the Plotly visualization. Given that we now track both single price-point and ladder price-point whales, there are often times when bubbles overlap the linebar charts. When this happens, simply freeze the visualization and zoom in on a particular area to separate the two in a more detailed view. An example of both the tooltip and annotation functionalities can be seen via the screenshot below, with a walkthrough of what is being displayed thereafter.  
 
-![Tooltip UI](https://raw.githubusercontent.com/pmaji/crypto-whale-whatching-app/master/screenshots/new_ui_tooltip_screenshot2.JPG)
+<img src="https://raw.githubusercontent.com/pmaji/crypto-whale-whatching-app/master/screenshots/new_ui_tooltip_screenshot2.JPG" width="700" height="300">
 
 Here we are looking at a zoom-in on the chart of ETH/USD. The bubble chart that we have hovered over in the top right hand corner is bright red in color given that we are highly confident that this is a single price-point whale. We can see that this is one unique sell order placed for 503.62 ETH at the $962.33 price point. Below the market price line we see two occurencies of what is likely a ladder price-point whale. The annotation on the green line at 350 on the x-axis (7 * 50.0) tells us that there are 7 unique orders for 50 ETH each set in the ladder span of the range of the green line. The thickness of the line is also proportional to the size of each rung on the order ladder. This is why the right-most ladder price-point whale is shown via a thinner line, as that set of orders is 52 unique orders for 10 ETH each, which, while smaller in individual order size, is actually larger in total volume. 
 
