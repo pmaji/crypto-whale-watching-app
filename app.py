@@ -148,7 +148,9 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
         ((vol_grp_bid[TBL_VOLUME] >= minVolume) & (vol_grp_bid['count'] >= 2.0) & (vol_grp_bid['count'] < 70.0))]
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
     vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
-    vol_grp_bid['text'] = (vol_grp_bid['count'].map(str) + "*" + vol_grp_bid['unique'].map(str))
+    vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
+                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol + 
+                    vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
     shape_bid[ticker] = vol_grp_bid
 
     vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -158,7 +160,9 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
         ((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
     vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
-    vol_grp_ask['text'] = (vol_grp_ask['count'].map(str) + "*" + vol_grp_ask['unique'].map(str))
+    vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
+                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol + 
+                    vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
     shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
@@ -251,6 +255,16 @@ def prepare_data(ticker):
     max_unique = max([shape_bid[ticker]['unique'].max(), shape_ask[ticker]['unique'].max()])
     width_factor = 15 / max_unique
     market_price = data['market price'].iloc[0]
+    bid_trace = go.Scatter(
+       x=[],y=[],
+       text=[],
+       mode='markers',hoverinfo='text',
+       marker=dict(opacity=0,color='rgb(0,255,0)'))
+    ask_trace = go.Scatter(
+       x=[],y=[],
+       text=[],
+       mode='markers',hoverinfo='text',
+       marker=dict(opacity=0,color='rgb(255,0,0)'))
     shape_arr = [dict(
         # Line Horizontal
         type='line',
@@ -267,7 +281,7 @@ def prepare_data(ticker):
     for index, row in shape_bid[ticker].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
-        posY = row['min_Price']
+        posY = (row['min_Price']+row['max_Price'])/2.0
         if cWidth > 15:
             cWidth = 15
         elif cWidth < 2:
@@ -277,15 +291,19 @@ def prepare_data(ticker):
                               x0=vol, y0=row['min_Price'],
                               x1=vol, y1=row['max_Price'],
                               line=dict(color='rgb(0, 255, 0)', width=cWidth)))
-        annot_arr.append(dict(
-            x=log10(vol), y=posY, xref='x', yref='y',
-            text=row['text'], textangle=randint(300, 340),
-            showarrow=True, arrowhead=5, ax=(randint(25, 45) * -1), ay=(randint(10, 40) * -1),
-            bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}, opacity=0.5))
+        bid_trace['x'].append(vol)
+        bid_trace['y'].append(row['min_Price'])
+        bid_trace['text'].append(row['text'])
+        bid_trace['text'].append(row['text'])
+        bid_trace['x'].append(vol)
+        bid_trace['y'].append(posY)
+        bid_trace['x'].append(vol)
+        bid_trace['y'].append(row['max_Price'])
+        bid_trace['text'].append(row['text'])
     for index, row in shape_ask[ticker].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
-        posY = row['max_Price']
+        posY = (row['min_Price']+row['max_Price'])/2.0
         if cWidth > 15:
             cWidth = 15
         elif cWidth < 2:
@@ -295,11 +313,15 @@ def prepare_data(ticker):
                               x0=vol, y0=row['min_Price'],
                               x1=vol, y1=row['max_Price'],
                               line=dict(color='rgb(255, 0, 0)', width=cWidth)))
-        annot_arr.append(dict(
-            x=log10(vol), y=posY, xref='x', yref='y',
-            text=row['text'], textangle=randint(300, 340),
-            showarrow=True, arrowhead=5, ax=(randint(25, 45) * -1), ay=(randint(10, 40)),
-            bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}, opacity=0.5))
+        ask_trace['x'].append(vol)
+        ask_trace['y'].append(row['min_Price'])
+        ask_trace['text'].append(row['text'])
+        ask_trace['x'].append(vol)
+        ask_trace['y'].append(posY)
+        ask_trace['text'].append(row['text'])
+        ask_trace['x'].append(vol)
+        ask_trace['y'].append(row['max_Price'])
+        ask_trace['text'].append(row['text'])
     result = {
         'data': [
             go.Scatter(
@@ -314,35 +336,27 @@ def prepare_data(ticker):
                     'line': {'width': 0.5, 'color': 'white'},
                     'color': data['color']
                 },
-
-            )
+            ),ask_trace, bid_trace
         ],
         'layout': go.Layout(
             # title automatically updates with refreshed market price
             title=("The present market price of {} is: {}{} at {}".format(ticker, symbol,
                                                                           str(data['market price'].iloc[0]),
                                                                           timeStamps[ticker])),
-            xaxis=dict(
-                title='Order Size',
-                type='log',
-                autorange=True
-            ),
+            xaxis=dict(title='Order Size',type='log',autorange=True),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest',
             # now code to ensure the sizing is right
             margin=go.Margin(
-                l=75,
-                r=75,
-                b=50,
-                t=50,
-                pad=4
-            ),
+                l=75,r=75,
+                b=50,t=50,
+                pad=4),
             paper_bgcolor='#c7c7c7',
             plot_bgcolor='#c7c7c7',
             # adding the horizontal reference line at market price
             shapes=shape_arr,
-            annotations=annot_arr
-
+            annotations=annot_arr,
+            showlegend=False
         )
     }
     return result
@@ -426,5 +440,4 @@ if __name__ == '__main__':
         currency = ticker.split("-")[0]
         get_data(ticker)
     watchdog()
-
 
