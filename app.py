@@ -132,13 +132,13 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
 
 
-    final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
+    final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(int)
     final_tbl = final_tbl[(final_tbl['n_unique_orders'] <= 20.0)]
     final_tbl[TBL_PRICE] = final_tbl.index
     final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, 2))
     final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args=(1, 2))
-    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
+    final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
 
     # Calculation for Volume grouping
     vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -148,7 +148,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
         ((vol_grp_bid[TBL_VOLUME] >= minVolume) & (vol_grp_bid['count'] >= 2.0) & (vol_grp_bid['count'] < 70.0))]
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
     vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
-    vol_grp_bid['text'] = (vol_grp_bid['count'].map(str) + "*" + vol_grp_bid['unique'].map(str))
+    vol_grp_bid['text'] = (vol_grp_bid['unique'].map(str) + "*" + vol_grp_bid['count'].map(str))
     shape_bid[ticker] = vol_grp_bid
 
     vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -158,7 +158,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
         ((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
     vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
-    vol_grp_ask['text'] = (vol_grp_ask['count'].map(str) + "*" + vol_grp_ask['unique'].map(str))
+    vol_grp_ask['text'] = (vol_grp_ask['unique'].map(str) + "*" + vol_grp_ask['count'].map(str))
     shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
@@ -170,7 +170,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     final_tbl['text'] = (
             "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
         TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-        str) + " " + currency + " orders")
+        str) + " unique orders for a total price of " + symbol + final_tbl['total_price'].map(str))
 
     # get market price; done at the end to correct for any latency in the milliseconds it takes to run this code
     mp = public_client.get_product_ticker(product_id=ticker)
@@ -426,5 +426,3 @@ if __name__ == '__main__':
         currency = ticker.split("-")[0]
         get_data(ticker)
     watchdog()
-
-
