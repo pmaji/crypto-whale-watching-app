@@ -2,6 +2,8 @@
 
 Welcome! This is a Python-based Dash app meant to track whale activity in buy / sell walls on crypto-currency exchanges (presently just operational for GDAX, but more to come). This document aims to explain the purpose, functionality, and future of this project. Please do share this with your fellow coders / traders / crypto-aficionado, donate via the donation addresses included in the "Support Needed" section below, and contribute to the future of this project by calling out issues, requesting new features, and submitting pull requests to improve the app.
 
+If you want to use a hosted version of the app, **[check out this link here](http://whales.cracklord.com/)** which has been graciously hosted by a member of the Ethereum community while we raise money via donations to migrate to AWS. If for any reason the page does not load properly, feel free to let us know via an issue, but more than likely it is because we are updating to the newest version of the codebase or performing maintenance.
+
 
 ## What's the point of this app?
 
@@ -55,7 +57,15 @@ The size of each observation is determined algorithmically using a transformatio
 
 Note: all of these limitations--i.e. the volume minimum, the order book limitations, etc., are parameterized within the app.py code and thus can be easily changed if so desired.
 
-Anyone interested with Python 3.6 installed can download the app.py or clone the repo and run the app locally, just check to be sure you have the few required modules installed (see requirements.txt for this). In addition to local hosting, members of the Ethereum community have volunteered to host versions on their own personal servers. A web-hosted version of the app [can be accessed here.](http://whales.cracklord.com/) If for any reason the page does not load, feel free to let us know via an issue, but more than likely it is because we are updating to the newest version of the codebase or performing maintenance.   
+Anyone interested with Python 3.6 installed can download the app.py or clone the repo and run the app locally, just check to be sure you have the few required modules installed. Once you have Python 3.6 installed, open up a Terminal and type:
+
+> pip install -r /path/to/requirements.txt
+
+Once its finished type:
+
+> python app.py
+
+Then open up your broswer and type in the set of numbers that pop up in terminal, which should look similar to "127.0.0.1:8050".
 
 ## Contribution Rules
 
