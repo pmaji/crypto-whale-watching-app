@@ -24,8 +24,8 @@ import threading
 from queue import Queue
 
 # creating variables to reduce hard-coding later on / facilitate later paramterization
+serverPort=8050
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
-THRESHOLDS = {"ETH": 1.0, "BTC": 0.25, "LTC": 4.0}
 TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE = 'price'
@@ -53,10 +53,9 @@ def getSendCache():
 public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX API
 
 
-def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
+def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     # function to get data from GDAX to be referenced in our call-back later
     # ticker a string to particular Ticker (e.g. ETH-USD)
-    # threshold is to limit our view to only orders greater than or equal to the threshold size defined
     # range is the deviation visible from current price
     # maxSize is a parameter to limit the maximum size of the bubbles in the viz
     # minVolumePerc is used to set the minimum volume needed for a price-point to be included in the viz
@@ -125,14 +124,13 @@ def get_data(ticker, threshold=1.0, range=0.05, maxSize=32, minVolumePerc=0.01):
     # append the buy and sell side tables to create one cohesive table
     fulltbl = bid_tbl.append(ask_tbl)
     minVolume = fulltbl[TBL_VOLUME].sum() * minVolumePerc
-    # limit our view to only orders greater than or equal to the threshold size defined
-    fulltbl = fulltbl[(fulltbl[TBL_VOLUME] >= threshold)]
+    # limit our view to only orders greater than or equal to the minVolume size
+    fulltbl = fulltbl[(fulltbl[TBL_VOLUME] >= minVolume)]
     # takes the square root of the volume (to be used later on for the purpose of sizing the order bubbles)
     fulltbl['sqrt'] = np.sqrt(fulltbl[TBL_VOLUME])
     # transforms the table for a final time to craft the data view we need for analysis
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
-    # Filter to just use data > Minimal Volume Percent
-    final_tbl = final_tbl[(final_tbl[TBL_VOLUME] >= minVolume)]
+
 
     final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
     final_tbl = final_tbl[(final_tbl['n_unique_orders'] <= 20.0)]
@@ -201,8 +199,7 @@ def refreshWorker():
         for ticker in TICKERS:
             time.sleep(1)
             currency = ticker.split("-")[0]
-            thresh = THRESHOLDS.get(currency.upper(), 1.0)
-            get_data(ticker, thresh)
+            get_data(ticker)
             sendCache = prepare_send()
 
 
@@ -419,7 +416,7 @@ def watchdog():
          tServer.start()
 
 def serverThread():
-   app.run_server(host='0.0.0.0')
+   app.run_server(host='0.0.0.0',port=serverPort)
 
 if __name__ == '__main__':
     # Initial Load of Data
@@ -427,8 +424,7 @@ if __name__ == '__main__':
         print("Initializing " + ticker)
         time.sleep(1)
         currency = ticker.split("-")[0]
-        thresh = THRESHOLDS.get(currency.upper(), 1.0)
-        get_data(ticker, thresh)
+        get_data(ticker)
     watchdog()
 
 
