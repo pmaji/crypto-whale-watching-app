@@ -32,6 +32,7 @@ GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKE
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
+prepared = {}
 shape_bid = {}
 shape_ask = {}
 timeStamps = {}  # For storing timestamp of Data Refresh
@@ -44,7 +45,7 @@ def get_data_cache(ticker):
 
 
 def get_All_data():
-    return tables
+    return prepared
 
 
 def getSendCache():
@@ -193,11 +194,10 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
         'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'colorintensity'].map(str) + ',0)'
     timeStamps[ticker] = datetime.now().strftime("%H:%M:%S")
     tables[ticker] = final_tbl
-    tables[ticker] = prepare_data(ticker)
-    return tables[ticker]
+    prepared[ticker] = prepare_data(ticker)
 
 
-def refreshWorker():
+def refreshGDAXWorker():
     global sendCache
     # establishes a separate refresh schedule for user vs. server makes app resilient to DDOS attacks / refresh crashes
     while True:
@@ -205,7 +205,7 @@ def refreshWorker():
             time.sleep(1)
             currency = ticker.split("-")[0]
             get_data(ticker)
-            sendCache = prepare_send()
+            
 
 
 # begin building the dash itself
@@ -411,27 +411,39 @@ def calcColor(x):
     return response
 
 def watchdog():
-   tWorker = threading.Thread(target=refreshWorker)
-   tWorker.daemon = True
-   tWorker.start()
+   tGDaxWorker = threading.Thread(target=refreshGDAXWorker)
+   tGDaxWorker.daemon = True
+   tGDaxWorker.start()
    tServer = threading.Thread(target=serverThread)
    tServer.daemon = False
    tServer.start()
+   tPreparer = threading.Thread(target=prepareThread)
+   tPreparer.daemon = False
+   tPreparer.start()
    while True:
       time.sleep(1)
-      if not tWorker.isAlive():
+      if not tGDaxWorker.isAlive():
          print("Watchdog detected dead Worker, restarting")
-         tWorker = threading.Thread(target=refreshWorker)
-         tWorker.daemon = True
-         tWorker.start()
+         tGDaxWorker = threading.Thread(target=refreshGDAXWorker)
+         tGDaxWorker.daemon = True
+         tGDaxWorker.start()
       if not tServer.isAlive():
          print("Watchdog detected dead Server, restarting")
          tServer = threading.Thread(target=serverThread)
          tServer.daemon = False
          tServer.start()
+      if not tPreparer.isAlive():
+         print("Watchdog detected dead Server, restarting")
+         tPreparer = threading.Thread(target=prepareThread)
+         tPreparer.daemon = False
+         tPreparer.start()
 
 def serverThread():
    app.run_server(host='0.0.0.0',port=serverPort)
+
+def prepareThread:
+    while True:
+        sendCache = prepare_send()
 
 if __name__ == '__main__':
     # Initial Load of Data
