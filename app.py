@@ -25,6 +25,7 @@ from queue import Queue
 
 # creating variables to reduce hard-coding later on / facilitate later paramterization
 serverPort=8050
+js_extern= "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/blob/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
@@ -209,7 +210,7 @@ def refreshWorker():
 
 # begin building the dash itself
 app = dash.Dash()
-
+app.scripts.append_script({"external_url": js_extern})
 # simple layout that can be improved with better CSS later, but it does the job for now
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
