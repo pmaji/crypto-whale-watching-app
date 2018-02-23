@@ -25,7 +25,7 @@ from queue import Queue
 
 # creating variables to reduce hard-coding later on / facilitate later paramterization
 serverPort=8050
-js_extern= "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/blob/master/main.js"
+js_extern= "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TICKERS = {"GDAX":["ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"]}
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
