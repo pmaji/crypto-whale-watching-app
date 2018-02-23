@@ -26,52 +26,63 @@ from queue import Queue
 
 from gdax_book import GDaxBook
 # creating variables to reduce hard-coding later on / facilitate later paramterization
-serverPort=8050
-clientRefresh=1
-js_extern= "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
+serverPort = 8050
+clientRefresh = 1
+js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
-marketPrice={}
+marketPrice = {}
 prepared = {}
 shape_bid = {}
 shape_ask = {}
-timeStampsGet = {} # For storing timestamp of Data Refresh
+timeStampsGet = {}  # For storing timestamp of Data Refresh
 timeStamps = {}  # For storing timestamp of CalcEnd
 sendCache = {}
-first_prepare=True
-first_pull=True
+first_prepare = True
+first_pull = True
+
 
 class Exchange:
-    ticker=[]
-    client=""
-    def __init__(self, pName, pTicker,pStamp):
-        self.name=pName
+    ticker = []
+    client = ""
+
+    def __init__(self, pName, pTicker, pStamp):
+        self.name = pName
         self.ticker.extend(pTicker)
-        self.millis= pStamp
+        self.millis = pStamp
+
+
 class Pair:
-    ob_Inst={}
-    threadWebsocket={}
-    threadPrepare={}
-    threadRecalc={}
+    ob_Inst = {}
+    threadWebsocket = {}
+    threadPrepare = {}
+    threadRecalc = {}
+
     def __init__(self, pExchange, pTicker):
-        self.name=pExchange+ " " + pTicker
-        self.ticker=pTicker
-        self.lastUpdate= "0"
-        self.exchange= pExchange
-        self.prepare=False
-        self.websocket=False
-        self.combined=pExchange+pTicker
-PAIRS=[]
-E_GDAX=Exchange("GDAX",["ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"],0)
+        self.name = pExchange + " " + pTicker
+        self.ticker = pTicker
+        self.lastUpdate = "0"
+        self.exchange = pExchange
+        self.prepare = False
+        self.websocket = False
+        self.combined = pExchange+pTicker
+
+
+PAIRS = []
+E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-BTC", "BTC-USD",
+                           "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"], 0)
 for ticker in E_GDAX.ticker:
-   cObj = Pair(E_GDAX.name,ticker)
-   PAIRS.append(cObj)
+    cObj = Pair(E_GDAX.name, ticker)
+    PAIRS.append(cObj)
 
 # creates a cache to speed up load time and facilitate refreshes
+
+
 def get_data_cache(ticker):
     return tables[ticker]
+
 
 def get_All_data():
     return prepared
@@ -81,49 +92,51 @@ def getSendCache():
     return sendCache
 
 
-
 def get_data(pair):
     # function to get data from GDAX to be referenced in our call-back later
-    x=5
+    x = 5
 
-def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points = 30):
-    global tables, timeStamps, shape_bid, shape_ask,E_GDAX, marketPrice, timeStampsGet
+
+def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
+    global tables, timeStamps, shape_bid, shape_ask, E_GDAX, marketPrice, timeStampsGet
     # function to get data from GDAX to be referenced in our call-back later
     # ticker a string to particular Ticker (e.g. ETH-USD)
     # range is the deviation visible from current price
     # maxSize is a parameter to limit the maximum size of the bubbles in the viz
     # minVolumePerc is used to set the minimum volume needed for a price-point to be included in the viz
-    ticker= pair.ticker
-    exchange= pair.exchange
-    combined= exchange+ticker
-    if pair.exchange == E_GDAX.name :
-       #order_book = gdax.PublicClient().get_product_order_book(ticker, level=3)
-       order_book = pair.ob_Inst.get_current_book()
-       ask_tbl= pd.DataFrame(data=order_book['asks'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
-       bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
+    ticker = pair.ticker
+    exchange = pair.exchange
+    combined = exchange+ticker
+    if pair.exchange == E_GDAX.name:
+        #order_book = gdax.PublicClient().get_product_order_book(ticker, level=3)
+        order_book = pair.ob_Inst.get_current_book()
+        ask_tbl = pd.DataFrame(data=order_book['asks'], columns=[
+                               TBL_PRICE, TBL_VOLUME, 'address'])
+        bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[
+                               TBL_PRICE, TBL_VOLUME, 'address'])
 
-    timeStampsGet[pair.combined]=datetime.now().strftime("%H:%M:%S")
+    timeStampsGet[pair.combined] = datetime.now().strftime("%H:%M:%S")
 
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
     try:
-      first_ask = float(ask_tbl.iloc[1, 0])
+        first_ask = float(ask_tbl.iloc[1, 0])
     except (IndexError):
-      print("Empty data for " + combined + " Will wait 2s")
-      time.sleep(2)
-      return False
+        print("Empty data for " + combined + " Will wait 2s")
+        time.sleep(2)
+        return False
     # building subsetted table for ask data only (sell-side)
     ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
     ask_tbl[TBL_VOLUME] = pd.to_numeric(ask_tbl[TBL_VOLUME])
-    ask_tbl=ask_tbl.sort_values(by=TBL_PRICE, ascending=True)
+    ask_tbl = ask_tbl.sort_values(by=TBL_PRICE, ascending=True)
     first_ask = float(ask_tbl.iloc[1, 0])
     perc_above_first_ask = ((1.0 + range) * first_ask)
-    
+
     # building subsetted table for bid data only (buy-side)
     bid_tbl[TBL_PRICE] = pd.to_numeric(bid_tbl[TBL_PRICE])
-    bid_tbl=bid_tbl.sort_values(by=TBL_PRICE, ascending=False)
+    bid_tbl = bid_tbl.sort_values(by=TBL_PRICE, ascending=False)
     first_bid = float(bid_tbl.iloc[1, 0])
     perc_above_first_bid = ((1.0 - range) * first_bid)
 
@@ -161,7 +174,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points = 30):
             (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_border), 'address'].sum()
         ob_bid.loc[i - 1] = [current_border, current_volume, current_adresses]
         i += 1
-    mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] + bid_tbl[TBL_PRICE].iloc[0])/2.0,3,0,2)
+    mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
+                    bid_tbl[TBL_PRICE].iloc[0])/2.0, 3, 0, 2)
     # flip the bid table so that the merged full_tbl is in logical order
     bid_tbl = bid_tbl.iloc[::-1]
 
@@ -175,13 +189,15 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points = 30):
     # transforms the table for a final time to craft the data view we need for analysis
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
 
-
-    final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
+    final_tbl['n_unique_orders'] = fulltbl.groupby(
+        TBL_PRICE).address.nunique().astype(float)
     final_tbl = final_tbl[(final_tbl['n_unique_orders'] <= 20.0)]
     final_tbl[TBL_PRICE] = final_tbl.index
-    final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, 2))
+    final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(
+        round_sig, args=(3, 0, 2))
     final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args=(1, 2))
-    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
+    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(
+        round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
 
     # Calculation for Volume grouping
@@ -193,8 +209,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points = 30):
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
     vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
-                    vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
+                           " each, from " + symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
+                           vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
     shape_bid[combined] = vol_grp_bid
 
     vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -205,8 +221,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points = 30):
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
     vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
-                    vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
+                           " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
+                           vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
     shape_ask[combined] = vol_grp_ask
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
@@ -216,21 +232,23 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points = 30):
 
     # making the tooltip column for our charts
     final_tbl['text'] = (
-            "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
-        TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-        str) + " " + currency + " orders")
+        "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
+            TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
+            str) + " " + currency + " orders")
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
     # Buys are green, Sells are Red. Probably WHALES are highlighted by being brighter, detected by unqiue order count.
     final_tbl['colorintensity'] = final_tbl['n_unique_orders'].apply(calcColor)
     final_tbl.loc[(final_tbl[TBL_PRICE] > mp), 'color'] = \
-        'rgb(' + final_tbl.loc[(final_tbl[TBL_PRICE] > mp), 'colorintensity'].map(str) + ',0,0)'
+        'rgb(' + final_tbl.loc[(final_tbl[TBL_PRICE] >
+                                mp), 'colorintensity'].map(str) + ',0,0)'
     final_tbl.loc[(final_tbl[TBL_PRICE] <= mp), 'color'] = \
-        'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE] <= mp), 'colorintensity'].map(str) + ',0)'
+        'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE]
+                                  <= mp), 'colorintensity'].map(str) + ',0)'
     timeStamps[combined] = timeStampsGet[combined]
     tables[combined] = final_tbl
-    marketPrice[combined]=mp
-    pair.prepare=True
+    marketPrice[combined] = mp
+    pair.prepare = True
     return True
 
 
@@ -264,7 +282,8 @@ static_content_before = [
 
 static_content_after = dcc.Interval(
     id='main-interval-component',
-    interval=clientRefresh * 1000  # in milliseconds for the automatic refresh; refreshes every 2 seconds
+    # in milliseconds for the automatic refresh; refreshes every 2 seconds
+    interval=clientRefresh * 1000
 )
 app.layout = html.Div(id='main_container', children=[
     html.Div(static_content_before),
@@ -273,26 +292,29 @@ app.layout = html.Div(id='main_container', children=[
 ])
 
 
-def prepare_data(ticker,exchange):
-    combined=exchange+ticker
+def prepare_data(ticker, exchange):
+    combined = exchange+ticker
     data = get_data_cache(combined)
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
-    x_min = min([shape_bid[combined]['volume'].min(), shape_ask[combined]['volume'].min(), data[TBL_VOLUME].min()])
-    x_max = max([shape_bid[combined]['volume'].max(), shape_ask[combined]['volume'].max(), data[TBL_VOLUME].max()])
-    max_unique = max([shape_bid[combined]['unique'].max(), shape_ask[combined]['unique'].max()])
+    x_min = min([shape_bid[combined]['volume'].min(),
+                 shape_ask[combined]['volume'].min(), data[TBL_VOLUME].min()])
+    x_max = max([shape_bid[combined]['volume'].max(),
+                 shape_ask[combined]['volume'].max(), data[TBL_VOLUME].max()])
+    max_unique = max([shape_bid[combined]['unique'].max(),
+                      shape_ask[combined]['unique'].max()])
     width_factor = 15 / max_unique
     market_price = marketPrice[combined]
     bid_trace = go.Scatter(
-       x=[],y=[],
-       text=[],
-       mode='markers',hoverinfo='text',
-       marker=dict(opacity=0,color='rgb(0,255,0)'))
+        x=[], y=[],
+        text=[],
+        mode='markers', hoverinfo='text',
+        marker=dict(opacity=0, color='rgb(0,255,0)'))
     ask_trace = go.Scatter(
-       x=[],y=[],
-       text=[],
-       mode='markers',hoverinfo='text',
-       marker=dict(opacity=0,color='rgb(255,0,0)'))
+        x=[], y=[],
+        text=[],
+        mode='markers', hoverinfo='text',
+        marker=dict(opacity=0, color='rgb(255,0,0)'))
     shape_arr = [dict(
         # Line Horizontal
         type='line',
@@ -364,20 +386,21 @@ def prepare_data(ticker,exchange):
                     'line': {'width': 0.5, 'color': 'white'},
                     'color': data['color']
                 },
-            ),ask_trace, bid_trace
+            ), ask_trace, bid_trace
         ],
         'layout': go.Layout(
             # title automatically updates with refreshed market price
-            title=("The present market price of {} on {} is: {}{} at {}".format(ticker,exchange, symbol,
-                                                                          str(marketPrice[combined]),
-                                                                          timeStamps[combined])),
-            xaxis=dict(title='Order Size',type='log',autorange=True),
+            title=("The present market price of {} on {} is: {}{} at {}".format(ticker, exchange, symbol,
+                                                                                str(
+                                                                                    marketPrice[combined]),
+                                                                                timeStamps[combined])),
+            xaxis=dict(title='Order Size', type='log', autorange=True),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest',
             # now code to ensure the sizing is right
             margin=go.Margin(
-                l=75,r=75,
-                b=50,t=50,
+                l=75, r=75,
+                b=50, t=50,
                 pad=4),
             paper_bgcolor='#c7c7c7',
             plot_bgcolor='#c7c7c7',
@@ -394,18 +417,18 @@ def prepare_send():
     lCache = []
     cData = get_All_data()
     for pair in PAIRS:
-     if(pair.prepare):
-        ticker=pair.ticker
-        exchange=pair.exchange
-        graph = 'live-graph-' +exchange+ ticker.lower().replace('-', '')
-        lCache.append(html.Br())
-        lCache.append(html.Br())
-        lCache.append(html.A(html.Button('Hide/ Show ' +exchange+ " " + ticker),
-                             href='javascript:(function(){if(document.getElementById("' + graph + '").style.display==""){document.getElementById("' + graph + '").style.display="none"}else{document.getElementById("' + graph + '").style.display=""}})()'))
-        lCache.append(dcc.Graph(
-            id=graph,
-            figure=cData[exchange+ticker]
-        ))
+        if(pair.prepare):
+            ticker = pair.ticker
+            exchange = pair.exchange
+            graph = 'live-graph-' + exchange + ticker.lower().replace('-', '')
+            lCache.append(html.Br())
+            lCache.append(html.Br())
+            lCache.append(html.A(html.Button('Hide/ Show ' + exchange + " " + ticker),
+                                 href='javascript:(function(){if(document.getElementById("' + graph + '").style.display==""){document.getElementById("' + graph + '").style.display="none"}else{document.getElementById("' + graph + '").style.display=""}})()'))
+            lCache.append(dcc.Graph(
+                id=graph,
+                figure=cData[exchange+ticker]
+            ))
     return lCache
 
 
@@ -440,109 +463,125 @@ def calcColor(x):
         response = 30
     return response
 
+
 def getStamp():
-  return int(round(time.time() * 1000))
+    return int(round(time.time() * 1000))
+
 
 def watchdog():
-   global PAIRS   
-   tServer = threading.Thread(target=serverThread)
-   tServer.daemon = False
-   tServer.start()
-   time.sleep(3) #get Server start
-   print("Server should be running now")
-   tPreparer = threading.Thread(target=sendPrepareThread)
-   tPreparer.daemon = False
-   tPreparer.start()
-   for pair in PAIRS:
-     pair.threadWebsocket = threading.Thread(target=websockThread, args=(pair,))
-     pair.threadWebsocket.daemon = False
-     pair.threadWebsocket.start()
-     time.sleep(3)
-   print("Web sockets up")
-   for pair in PAIRS:
-     pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
-     pair.threadRecalc.daemon = False
-     pair.threadRecalc.start()
-     time.sleep(2)
-   print("ReCalc up")
-   for pair in PAIRS:
-     pair.threadPrepare = threading.Thread(target=preparePairThread, args=(pair,))
-     pair.threadPrepare.daemon = False
-     pair.threadPrepare.start()
-   print("Everything should be running now, starting Watchdog, to control the herd")
-   while True:
-      time.sleep(2)
-      alive=True
-      for pair in PAIRS:
-        if not pair.threadRecalc.isAlive():
-          alive=False
-          print("Restarting pair Recalc " + pair.exchange +" "+ pair.ticker)
-          pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
-          pair.threadRecalc.daemon = False
-          pair.threadRecalc.start()
-        if not pair.threadWebsocket.isAlive():
-          alive=False
-          print("Restarting pair Web socket " + pair.exchange +" "+ pair.ticker)
-          pair.threadWebsocket = threading.Thread(target=websockThread, args=(pair,))
-          pair.threadWebsocket.daemon = False
-          pair.threadWebsocket.start()
-        if not pair.threadPrepare.isAlive():
-          alive=False
-          print("Restarting pair Prepare worker " + pair.exchange +" "+ pair.ticker)
-          pair.threadPrepare = threading.Thread(target=preparePairThread, args=(pair,))
-          pair.threadPrepare.daemon = False
-          pair.threadPrepare.start()
-      if not tServer.isAlive():
-         alive=False
-         print("Watchdog detected dead Server, restarting")
-         tServer = threading.Thread(target=serverThread)
-         tServer.daemon = False
-         tServer.start()
-      if not tPreparer.isAlive():
-         alive=False
-         print("Watchdog detected dead Preparer, restarting")
-         tPreparer = threading.Thread(target=sendPrepareThread)
-         tPreparer.daemon = False
-         tPreparer.start()
-      if not alive :
-        print("Watchdog got some bad sheeps back to group")
+    global PAIRS
+    tServer = threading.Thread(target=serverThread)
+    tServer.daemon = False
+    tServer.start()
+    time.sleep(3)  # get Server start
+    print("Server should be running now")
+    tPreparer = threading.Thread(target=sendPrepareThread)
+    tPreparer.daemon = False
+    tPreparer.start()
+    for pair in PAIRS:
+        pair.threadWebsocket = threading.Thread(
+            target=websockThread, args=(pair,))
+        pair.threadWebsocket.daemon = False
+        pair.threadWebsocket.start()
+        time.sleep(3)
+    print("Web sockets up")
+    for pair in PAIRS:
+        pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
+        pair.threadRecalc.daemon = False
+        pair.threadRecalc.start()
+        time.sleep(2)
+    print("ReCalc up")
+    for pair in PAIRS:
+        pair.threadPrepare = threading.Thread(
+            target=preparePairThread, args=(pair,))
+        pair.threadPrepare.daemon = False
+        pair.threadPrepare.start()
+    print("Everything should be running now, starting Watchdog, to control the herd")
+    while True:
+        time.sleep(2)
+        alive = True
+        for pair in PAIRS:
+            if not pair.threadRecalc.isAlive():
+                alive = False
+                print("Restarting pair Recalc " +
+                      pair.exchange + " " + pair.ticker)
+                pair.threadRecalc = threading.Thread(
+                    target=recalcThread, args=(pair,))
+                pair.threadRecalc.daemon = False
+                pair.threadRecalc.start()
+            if not pair.threadWebsocket.isAlive():
+                alive = False
+                print("Restarting pair Web socket " +
+                      pair.exchange + " " + pair.ticker)
+                pair.threadWebsocket = threading.Thread(
+                    target=websockThread, args=(pair,))
+                pair.threadWebsocket.daemon = False
+                pair.threadWebsocket.start()
+            if not pair.threadPrepare.isAlive():
+                alive = False
+                print("Restarting pair Prepare worker " +
+                      pair.exchange + " " + pair.ticker)
+                pair.threadPrepare = threading.Thread(
+                    target=preparePairThread, args=(pair,))
+                pair.threadPrepare.daemon = False
+                pair.threadPrepare.start()
+        if not tServer.isAlive():
+            alive = False
+            print("Watchdog detected dead Server, restarting")
+            tServer = threading.Thread(target=serverThread)
+            tServer.daemon = False
+            tServer.start()
+        if not tPreparer.isAlive():
+            alive = False
+            print("Watchdog detected dead Preparer, restarting")
+            tPreparer = threading.Thread(target=sendPrepareThread)
+            tPreparer.daemon = False
+            tPreparer.start()
+        if not alive:
+            print("Watchdog got some bad sheeps back to group")
+
 
 def serverThread():
-    app.run_server(host='0.0.0.0',port=serverPort)
+    app.run_server(host='0.0.0.0', port=serverPort)
+
 
 def sendPrepareThread():
-    global sendCache,first_prepare
+    global sendCache, first_prepare
     while True:
         sendCache = prepare_send()
         time.sleep(0.5)
 
+
 def recalcThread(pair):
-    count=0
+    count = 0
     while True:
-        if(pair.websocket): 
-           count = count+1 if (not calc_data(pair)) else 0
-           if count > 10:
-              print("Going to kill Web socket from "+ pair.ticker)
-              count=-5
-              pair.threadWebsocket._stop()
+        if(pair.websocket):
+            count = count+1 if (not calc_data(pair)) else 0
+            if count > 10:
+                print("Going to kill Web socket from " + pair.ticker)
+                count = -5
+                pair.threadWebsocket._stop()
+
 
 def websockThread(pair):
-    pair.websocket=False
-    pair.ob_Inst=GDaxBook(pair.ticker)
+    pair.websocket = False
+    pair.ob_Inst = GDaxBook(pair.ticker)
     time.sleep(3)
-    pair.websocket=True
+    pair.websocket = True
     while True:
-      time.sleep(4)
+        time.sleep(4)
+
 
 def preparePairThread(pair):
     global prepared
-    ticker=pair.ticker
-    exc=pair.exchange
-    cbn=exc+ticker
+    ticker = pair.ticker
+    exc = pair.exchange
+    cbn = exc+ticker
     while True:
-        if(pair.prepare): 
-           prepared[cbn] = prepare_data(ticker, exc)
+        if(pair.prepare):
+            prepared[cbn] = prepare_data(ticker, exc)
         time.sleep(0.5)
+
 
 if __name__ == '__main__':
     # Initial Load of Data
