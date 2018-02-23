@@ -167,7 +167,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,0,2))
     vol_grp_ask[TBL_VOLUME] = vol_grp_ask[TBL_VOLUME].apply(round_sig, args=(1, 2))
     vol_grp_ask['min_Price'] = vol_grp_ask['min_Price'].apply(round_sig, args=(3, 0, 2))
-    vol_grp_ask['min_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3, 0, 2)) 
+    vol_grp_ask['min_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3, 0, 2))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) + 
                     " " + currency + " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol + 
                     vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + vol_grp_ask[TBL_VOLUME].map(str) + " " + currency)
