@@ -150,7 +150,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
     vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol + 
+                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
                     vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
     shape_bid[ticker] = vol_grp_bid
 
@@ -162,7 +162,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
     vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol + 
+                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
                     vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
     shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
@@ -233,7 +233,7 @@ static_content_before = [
         ' See GitHub for further details.'),
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
+    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();"),
     html.A(html.Button('Colorblind Mode'), href="javascript:setInterval(colorblindInt,250);")
 ]
 
