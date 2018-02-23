@@ -27,7 +27,7 @@ from queue import Queue
 serverPort=8050
 js_extern= "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
-TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
+TICKERS = ["ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"]
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
@@ -133,13 +133,14 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
 
 
-    final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(float)
+    final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(int)
     final_tbl = final_tbl[(final_tbl['n_unique_orders'] <= 20.0)]
     final_tbl[TBL_PRICE] = final_tbl.index
     final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, 2))
     final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args=(1, 2))
     final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
+    final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
 
     # Calculation for Volume grouping
     vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -148,10 +149,13 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_bid = vol_grp_bid[
         ((vol_grp_bid[TBL_VOLUME] >= minVolume) & (vol_grp_bid['count'] >= 2.0) & (vol_grp_bid['count'] < 70.0))]
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
-    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
-    vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
-                    vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
+    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_bid[TBL_VOLUME] = vol_grp_bid[TBL_VOLUME].apply(round_sig, args=(1, 2))
+    vol_grp_bid['min_Price'] = vol_grp_bid['min_Price'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_bid['max_Price'] = vol_grp_bid['max_Price'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) + 
+                    " " + currency + " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol + 
+                    vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + vol_grp_bid[TBL_VOLUME].map(str) + " " + currency)
     shape_bid[ticker] = vol_grp_bid
 
     vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -160,10 +164,13 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_ask = vol_grp_ask[
         ((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
-    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
-    vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
-                    vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
+    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_ask[TBL_VOLUME] = vol_grp_ask[TBL_VOLUME].apply(round_sig, args=(1, 2))
+    vol_grp_ask['min_Price'] = vol_grp_ask['min_Price'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_ask['min_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) + 
+                    " " + currency + " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol + 
+                    vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + vol_grp_ask[TBL_VOLUME].map(str) + " " + currency)
     shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
@@ -175,7 +182,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     final_tbl['text'] = (
             "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
         TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-        str) + " " + currency + " orders")
+        str) + " unique orders for a total price of " + symbol + final_tbl['total_price'].map(str))
 
     # get market price; done at the end to correct for any latency in the milliseconds it takes to run this code
     mp = public_client.get_product_ticker(product_id=ticker)
@@ -432,7 +439,7 @@ def watchdog():
          tServer.start()
 
 def serverThread():
-   app.run_server(host='0.0.0.0',port=serverPort)
+   app.run_server(host='127.0.0.1',port=serverPort)
 
 if __name__ == '__main__':
     # Initial Load of Data
@@ -442,4 +449,3 @@ if __name__ == '__main__':
         currency = ticker.split("-")[0]
         get_data(ticker)
     watchdog()
-
