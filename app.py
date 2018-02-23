@@ -439,7 +439,7 @@ def watchdog():
          tServer.start()
 
 def serverThread():
-   app.run_server(host='127.0.0.1',port=serverPort)
+   app.run_server(host='0.0.0.0',port=serverPort)
 
 if __name__ == '__main__':
     # Initial Load of Data
