@@ -224,6 +224,9 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
                            " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
                            vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
     shape_ask[combined] = vol_grp_ask
+                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
+                    vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
+
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
     # nifty way of ensuring the size of the bubbles is proportional and reasonable
@@ -277,7 +280,8 @@ static_content_before = [
         ' See GitHub for further details.'),
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
+    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();"),
+    html.A(html.Button('Colorblind Mode'), href="javascript:setInterval(colorblindInt,250);")
 ]
 
 static_content_after = dcc.Interval(
