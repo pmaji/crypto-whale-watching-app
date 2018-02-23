@@ -27,7 +27,7 @@ from queue import Queue
 serverPort=8050
 js_extern= "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/blob/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
-TICKERS = ("ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR")
+TICKERS = {"GDAX":["ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"]}
 GRAPH_IDS = ['live-graph-' + ticker.lower().replace('-', '') for ticker in TICKERS]
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
@@ -52,10 +52,8 @@ def getSendCache():
     return sendCache
 
 
-public_client = gdax.PublicClient()  # defines public client for all functions; taken from GDAX API
 
-
-def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
+def get_data(ticker, exchange, range=0.05, maxSize=32, minVolumePerc=0.01):
     # function to get data from GDAX to be referenced in our call-back later
     # ticker a string to particular Ticker (e.g. ETH-USD)
     # range is the deviation visible from current price
@@ -68,11 +66,11 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
-
-    # pulls in the order book data from GDAX; split orders by ask vs. bid
-    order_book = public_client.get_product_order_book(ticker, level=3)
-    ask_tbl = pd.DataFrame(data=order_book['asks'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
-    bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
+    if exchange == "GDAX" :
+       # pulls in the order book data from GDAX; split orders by ask vs. bid
+       order_book = gdax.PublicClient().get_product_order_book(ticker, level=3)
+       ask_tbl = pd.DataFrame(data=order_book['asks'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
+       bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[TBL_PRICE, TBL_VOLUME, 'address'])
 
     # building subsetted table for ask data only (sell-side)
     ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
@@ -151,7 +149,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
     vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol + 
+                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
                     vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
     shape_bid[ticker] = vol_grp_bid
 
@@ -163,7 +161,7 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
     vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
-                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol + 
+                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
                     vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
     shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
@@ -192,20 +190,20 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
         'rgb(' + final_tbl.loc[(final_tbl[TBL_PRICE] > marketPrice), 'colorintensity'].map(str) + ',0,0)'
     final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'color'] = \
         'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE] <= marketPrice), 'colorintensity'].map(str) + ',0)'
-    timeStamps[ticker] = datetime.now().strftime("%H:%M:%S")
-    tables[ticker] = final_tbl
-    prepared[ticker] = prepare_data(ticker)
+    timeStamps[exchange+ticker] = datetime.now().strftime("%H:%M:%S")
+    tables[exchange+ticker] = final_tbl
+    prepared[exchange+ticker] = prepare_data(exchange+ticker)
 
 
 def refreshGDAXWorker():
     global sendCache
     # establishes a separate refresh schedule for user vs. server makes app resilient to DDOS attacks / refresh crashes
     while True:
-        for ticker in TICKERS:
+        for ticker in TICKERS.GDAX:
             time.sleep(1)
             currency = ticker.split("-")[0]
-            get_data(ticker)
-            
+            get_data(ticker, "GDAX")
+
 
 
 # begin building the dash itself
@@ -247,8 +245,8 @@ app.layout = html.Div(id='main_container', children=[
 ])
 
 
-def prepare_data(ticker):
-    data = get_data_cache(ticker)
+def prepare_data(ticker,exchange):
+    data = get_data_cache(exchange+ticker)
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
     x_min = min([shape_bid[ticker]['volume'].min(), shape_ask[ticker]['volume'].min(), data[TBL_VOLUME].min()])
@@ -279,7 +277,7 @@ def prepare_data(ticker):
         showarrow=True, arrowhead=7, ax=20, ay=0,
         bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}
     )]
-    for index, row in shape_bid[ticker].iterrows():
+    for index, row in shape_bid[exchange+ticker].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
         posY = (row['min_Price']+row['max_Price'])/2.0
@@ -301,7 +299,7 @@ def prepare_data(ticker):
         bid_trace['x'].append(vol)
         bid_trace['y'].append(row['max_Price'])
         bid_trace['text'].append(row['text'])
-    for index, row in shape_ask[ticker].iterrows():
+    for index, row in shape_ask[exchange+ticker].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
         posY = (row['min_Price']+row['max_Price'])/2.0
@@ -343,7 +341,7 @@ def prepare_data(ticker):
             # title automatically updates with refreshed market price
             title=("The present market price of {} is: {}{} at {}".format(ticker, symbol,
                                                                           str(data['market price'].iloc[0]),
-                                                                          timeStamps[ticker])),
+                                                                          timeStamps[exchange+ticker])),
             xaxis=dict(title='Order Size',type='log',autorange=True),
             yaxis={'title': '{} Price'.format(ticker)},
             hovermode='closest',
@@ -366,15 +364,16 @@ def prepare_data(ticker):
 def prepare_send():
     lCache = []
     cData = get_All_data()
-    for ticker in TICKERS:
-        graph = 'live-graph-' + ticker.lower().replace('-', '')
+    exchange="GDAX"
+    for ticker in TICKERS.GDAX:
+        graph = 'live-graph-' +exchange+ ticker.lower().replace('-', '')
         lCache.append(html.Br())
         lCache.append(html.Br())
         lCache.append(html.A(html.Button('Hide/ Show ' + ticker),
                              href='javascript:(function(){if(document.getElementById("' + graph + '").style.display==""){document.getElementById("' + graph + '").style.display="none"}else{document.getElementById("' + graph + '").style.display=""}})()'))
         lCache.append(dcc.Graph(
             id=graph,
-            figure=cData[ticker]
+            figure=cData[exchange+ticker]
         ))
     return lCache
 
@@ -441,16 +440,15 @@ def watchdog():
 def serverThread():
    app.run_server(host='0.0.0.0',port=serverPort)
 
-def prepareThread:
+def prepareThread():
     while True:
         sendCache = prepare_send()
 
 if __name__ == '__main__':
     # Initial Load of Data
-    for ticker in TICKERS:
-        print("Initializing " + ticker)
+    for ticker in TICKERS.GDAX:
+        print("Initializing GDAX " + ticker)
         time.sleep(1)
         currency = ticker.split("-")[0]
-        get_data(ticker)
+        get_data(ticker,"GDAX")
     watchdog()
-
