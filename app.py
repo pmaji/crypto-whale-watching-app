@@ -156,6 +156,10 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) + 
                     " " + currency + " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol + 
                     vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + vol_grp_bid[TBL_VOLUME].map(str) + " " + currency)
+    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
+    vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
+                    " each, from " +symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
+                    vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
     shape_bid[ticker] = vol_grp_bid
 
     vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -171,6 +175,10 @@ def get_data(ticker, range=0.05, maxSize=32, minVolumePerc=0.01):
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) + 
                     " " + currency + " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol + 
                     vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + vol_grp_ask[TBL_VOLUME].map(str) + " " + currency)
+    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
+    vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
+                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
+                    vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
     shape_ask[ticker] = vol_grp_ask
     # Fixing Bubble Size
     cMaxSize = final_tbl['sqrt'].max()
