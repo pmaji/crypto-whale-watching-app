@@ -234,6 +234,7 @@ static_content_before = [
     html.A(html.Button('Freeze all'),
            href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
     html.A(html.Button('Un-freeze all'), href="javascript:location.reload();")
+    html.A(html.Button('Colorblind Mode'), href="javascript:setInterval(colorblindInt,250);")
 ]
 
 static_content_after = dcc.Interval(
