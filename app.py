@@ -193,7 +193,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum() # transforms the table for a final time to craft the data view we need for analysis
 
     final_tbl['n_unique_orders'] = fulltbl.groupby(
-        TBL_PRICE).address.nunique().astype(float)
+        TBL_PRICE).address.nunique().astype(int)
+
     final_tbl = final_tbl[(final_tbl['n_unique_orders'] <= 20.0)]
     final_tbl[TBL_PRICE] = final_tbl.index
     final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(
@@ -202,6 +203,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(
         round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
+    final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
 
     # Get Dataset for Volume Grouping
     vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
@@ -224,14 +226,24 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
     
     # Round the size of order
-    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
-    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
+    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,0,2))
+    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,0,2))
+    
+    # Round the Volume
+    vol_grp_bid[TBL_VOLUME] = vol_grp_bid[TBL_VOLUME].apply(round_sig, args=(1,0,2))
+    vol_grp_ask[TBL_VOLUME] = vol_grp_ask[TBL_VOLUME].apply(round_sig, args=(1,0,2)) 
+    
+    # Round the Min/ Max Price
+    vol_grp_bid['min_Price'] = vol_grp_bid['min_Price'].apply(round_sig, args=(3,0,2))
+    vol_grp_ask['min_Price'] = vol_grp_ask['min_Price'].apply(round_sig, args=(3,0,2)) 
+    vol_grp_bid['max_Price'] = vol_grp_bid['max_Price'].apply(round_sig, args=(3,0,2))
+    vol_grp_ask['max_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3,0,2))
     
     # Append individual text to each elem
-    vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
+    vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +" "+ currency +
                            " each, from " + symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
                            vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
-    vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
+    vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +" "+  currency +
                            " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
                            vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
     
@@ -249,7 +261,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     final_tbl['text'] = (
         "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
             TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-            str) + " " + currency + " orders")
+            str) + " unique orders for a total price of " + symbol + final_tbl['total_price'].map(str))
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
     # Buys are green, Sells are Red. Probably WHALES are highlighted by being brighter, detected by unqiue order count.
