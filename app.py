@@ -38,7 +38,7 @@ prepared = {}
 shape_bid = {}
 shape_ask = {}
 timeStampsGet = {}  # For storing timestamp of Data Refresh
-timeStamps = {}  # For storing timestamp of CalcEnd
+timeStamps = {}  # For storing timestamp from calc start at calc end
 sendCache = {}
 first_prepare = True
 first_pull = True
@@ -55,6 +55,7 @@ class Exchange:
 
 
 class Pair:
+    # Class to store a pair with his threads
     ob_Inst = {}
     threadWebsocket = {}
     threadPrepare = {}
@@ -70,7 +71,7 @@ class Pair:
         self.combined = pExchange+pTicker
 
 
-PAIRS = []
+PAIRS = [] # Array containing all pairs
 E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-BTC", "BTC-USD",
                            "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"], 0)
 for ticker in E_GDAX.ticker:
@@ -92,11 +93,6 @@ def getSendCache():
     return sendCache
 
 
-def get_data(pair):
-    # function to get data from GDAX to be referenced in our call-back later
-    x = 5
-
-
 def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     global tables, timeStamps, shape_bid, shape_ask, E_GDAX, marketPrice, timeStampsGet
     # function to get data from GDAX to be referenced in our call-back later
@@ -115,7 +111,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[
                                TBL_PRICE, TBL_VOLUME, 'address'])
 
-    timeStampsGet[pair.combined] = datetime.now().strftime("%H:%M:%S")
+    timeStampsGet[pair.combined] = datetime.now().strftime("%H:%M:%S") # save timestamp at data pull time
 
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
@@ -127,67 +123,74 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         print("Empty data for " + combined + " Will wait 2s")
         time.sleep(2)
         return False
-    # building subsetted table for ask data only (sell-side)
+    # prepare Price
     ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
-    ask_tbl[TBL_VOLUME] = pd.to_numeric(ask_tbl[TBL_VOLUME])
+    bid_tbl[TBL_PRICE] = pd.to_numeric(bid_tbl[TBL_PRICE])    
+    
+    # data from websocket are not sorted yet
     ask_tbl = ask_tbl.sort_values(by=TBL_PRICE, ascending=True)
-    first_ask = float(ask_tbl.iloc[1, 0])
-    perc_above_first_ask = ((1.0 + range) * first_ask)
-
-    # building subsetted table for bid data only (buy-side)
-    bid_tbl[TBL_PRICE] = pd.to_numeric(bid_tbl[TBL_PRICE])
     bid_tbl = bid_tbl.sort_values(by=TBL_PRICE, ascending=False)
+    
+    # get first on each side
+    first_ask = float(ask_tbl.iloc[1, 0])
     first_bid = float(bid_tbl.iloc[1, 0])
+    
+    # get perc for ask/ bid
+    perc_above_first_ask = ((1.0 + range) * first_ask)
     perc_above_first_bid = ((1.0 - range) * first_bid)
-
+    
     # limits the size of the table so that we only look at orders 5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
-    dif_ask = perc_above_first_ask - first_ask
-    # limits the size of the table so that we only look at orders 5% above and under market price
     bid_tbl = bid_tbl[(bid_tbl[TBL_PRICE] >= perc_above_first_bid)]
 
-    bid_tbl[TBL_VOLUME] = pd.to_numeric(bid_tbl[TBL_VOLUME])
+    # changing this position after first filter makes calc faster 
+    bid_tbl[TBL_VOLUME] = pd.to_numeric(bid_tbl[TBL_VOLUME]) 
     ask_tbl[TBL_VOLUME] = pd.to_numeric(ask_tbl[TBL_VOLUME])
-    # explanatory comment here to come
-    ob_step = dif_ask / ob_points
+    
+    # prepare everything for depchart
+    ob_step = (perc_above_first_ask - first_ask) / ob_points
     ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
-    # explanatory comment here to come (similar to line 85 comment)
     ob_bid = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
 
     # Following is creating a new tbl 'ob_bid' which contains the summed volume and adress-count from current price to target price
     i = 1
     while i < ob_points:
-        current_border = first_ask + (i * ob_step)
-        current_volume = ask_tbl.loc[
-            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_border), TBL_VOLUME].sum()
-        current_adresses = ask_tbl.loc[
-            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_border), 'address'].sum()
-        ob_ask.loc[i - 1] = [current_border, current_volume, current_adresses]
-        i += 1
-    # Following is creating a new tbl 'ob_bid' wich contains the summed volume and adresses from current price to target price
-    i = 1
-    while i < ob_points:
-        current_border = first_bid - (i * ob_step)
-        current_volume = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_border), TBL_VOLUME].sum()
-        current_adresses = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_border), 'address'].sum()
+        # Get Borders for ask/ bid
+        current_ask_border = first_ask + (i * ob_step)
+        current_bid_border = first_bid - (i * ob_step)
+        
+        # Get Volume
+        current_ask_volume = ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), TBL_VOLUME].sum()
+        current_bid_volume = bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
+        
+        # Get Adresses
+        current_ask_adresses = ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), 'address'].sum()
+        current_bid_adresses = bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].sum()
+        
+        # Save Data
+        ob_ask.loc[i - 1] = [current_ask_border, current_ask_volume, current_ask_adresses]
         ob_bid.loc[i - 1] = [current_border, current_volume, current_adresses]
         i += 1
+
+    # Get Market Price
     mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
                     bid_tbl[TBL_PRICE].iloc[0])/2.0, 3, 0, 2)
-    # flip the bid table so that the merged full_tbl is in logical order
-    bid_tbl = bid_tbl.iloc[::-1]
-
-    # append the buy and sell side tables to create one cohesive table
-    fulltbl = bid_tbl.append(ask_tbl)
-    minVolume = fulltbl[TBL_VOLUME].sum() * minVolumePerc
-    # limit our view to only orders greater than or equal to the minVolume size
-    fulltbl = fulltbl[(fulltbl[TBL_VOLUME] >= minVolume)]
-    # takes the square root of the volume (to be used later on for the purpose of sizing the order bubbles)
-    fulltbl['sqrt'] = np.sqrt(fulltbl[TBL_VOLUME])
-    # transforms the table for a final time to craft the data view we need for analysis
-    final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum()
+    
+    
+    bid_tbl = bid_tbl.iloc[::-1] # flip the bid table so that the merged full_tbl is in logical order
+    
+    fulltbl = bid_tbl.append(ask_tbl) # append the buy and sell side tables to create one cohesive table
+    
+    minVolume = fulltbl[TBL_VOLUME].sum() * minVolumePerc # Calc minimum Volume for filtering
+    fulltbl = fulltbl[(fulltbl[TBL_VOLUME] >= minVolume)] # limit our view to only orders greater than or equal to the minVolume size
+    
+    fulltbl['sqrt'] = np.sqrt(fulltbl[TBL_VOLUME]) # takes the square root of the volume (to be used later on for the purpose of sizing the order bubbles)
+    
+    final_tbl = fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]].sum() # transforms the table for a final time to craft the data view we need for analysis
 
     final_tbl['n_unique_orders'] = fulltbl.groupby(
         TBL_PRICE).address.nunique().astype(float)
@@ -200,35 +203,44 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
 
-    # Calculation for Volume grouping
+    # Get Dataset for Volume Grouping
     vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
         columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
+    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
+        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
+    
+    # Get rid of header group row
     vol_grp_bid.columns = vol_grp_bid.columns.droplevel(0)
+    vol_grp_ask.columns = vol_grp_ask.columns.droplevel(0)
+    
+    # Filter data by min Volume, more than 1 (intefere with bubble), less than 70 (mostly 1 or 0.5 ETH humans)
     vol_grp_bid = vol_grp_bid[
         ((vol_grp_bid[TBL_VOLUME] >= minVolume) & (vol_grp_bid['count'] >= 2.0) & (vol_grp_bid['count'] < 70.0))]
+    vol_grp_ask = vol_grp_ask[
+        ((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
+    
+    # Get the size of each order
     vol_grp_bid['unique'] = vol_grp_bid.index.get_level_values(TBL_VOLUME)
+    vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
+    
+    # Round the size of order
     vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3,))
+    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
+    
+    # Append individual text to each elem
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(str) +
                            " each, from " + symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
                            vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[TBL_VOLUME].map(str))
-    shape_bid[combined] = vol_grp_bid
-
-    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
-        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
-    vol_grp_ask.columns = vol_grp_ask.columns.droplevel(0)
-    vol_grp_ask = vol_grp_ask[
-        ((vol_grp_ask[TBL_VOLUME] >= minVolume) & (vol_grp_ask['count'] >= 2.0) & (vol_grp_ask['count'] < 70.0))]
-    vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
-    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3,))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(str) +
                            " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
                            vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
+    
+    # Save data global
     shape_ask[combined] = vol_grp_ask
-                    " each, from " +symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
-                    vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[TBL_VOLUME].map(str))
+    shape_bid[combined] = vol_grp_bid
 
-    # Fixing Bubble Size
-    cMaxSize = final_tbl['sqrt'].max()
+    cMaxSize = final_tbl['sqrt'].max() # Fixing Bubble Size
+    
     # nifty way of ensuring the size of the bubbles is proportional and reasonable
     sizeFactor = maxSize / cMaxSize
     final_tbl['sqrt'] = final_tbl['sqrt'] * sizeFactor
@@ -248,10 +260,14 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     final_tbl.loc[(final_tbl[TBL_PRICE] <= mp), 'color'] = \
         'rgb(0,' + final_tbl.loc[(final_tbl[TBL_PRICE]
                                   <= mp), 'colorintensity'].map(str) + ',0)'
-    timeStamps[combined] = timeStampsGet[combined]
-    tables[combined] = final_tbl
-    marketPrice[combined] = mp
-    pair.prepare = True
+
+    timeStamps[combined] = timeStampsGet[combined] # now save timestamp of calc start in timestamp used for title
+    
+    tables[combined] = final_tbl # save table data
+    
+    marketPrice[combined] = mp # save market price
+    
+    pair.prepare = True # just used for first enabling of send prepare
     return True
 
 
