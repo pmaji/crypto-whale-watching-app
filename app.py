@@ -73,8 +73,8 @@ class Pair:
 
 
 PAIRS = []  # Array containing all pairs
-E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-BTC", "BTC-USD",
-                           "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR", "BCH-USD", "BCH-BTC", "BCH-EUR"], 0)
+E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-EUR", "ETH-BTC",
+                           "BTC-USD", "BTC-EUR", "BTC-GBP", "LTC-USD", "LTC-EUR", "LTC-BTC", "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
 for ticker in E_GDAX.ticker:
     cObj = Pair(E_GDAX.name, ticker)
     PAIRS.append(cObj)
@@ -211,16 +211,14 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
+    bid_tbl['total_price'] = bid_tbl['volume'] * bid_tbl['price']
+    ask_tbl['total_price'] = ask_tbl['volume'] * ask_tbl['price']
 
     # Get Dataset for Volume Grouping
-    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
-        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
-    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
-        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
-
-    # Get rid of header group row
-    vol_grp_bid.columns = vol_grp_bid.columns.droplevel(0)
-    vol_grp_ask.columns = vol_grp_ask.columns.droplevel(0)
+    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
+    vol_grp_bid.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
+    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
+    vol_grp_ask.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
 
     # Filter data by min Volume, more than 1 (intefere with bubble), less than 70 (mostly 1 or 0.5 ETH humans)
     vol_grp_bid = vol_grp_bid[
@@ -246,17 +244,21 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     vol_grp_bid['max_Price'] = vol_grp_bid['max_Price'].apply(round_sig, args=(3, 0, 2))
     vol_grp_ask['max_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3, 0, 2))
 
-    # Append individual text to each elem
+    # Round and format the Total Price
+    vol_grp_bid['total_price'] = (vol_grp_bid['total_price'].round(2).apply(lambda x: "{:,}".format(x)))
+    vol_grp_ask['total_price'] = (vol_grp_ask['total_price'].round(2).apply(lambda x: "{:,}".format(x)))
+
+    # Append individual text to each element
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(
         str) + " " + currency +
                            " each, from " + symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
-                           vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[
-                               TBL_VOLUME].map(str))
+                           vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + vol_grp_bid[
+                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_bid['total_price'].map(str))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(
-        str) + " " + currency +
+        str) + " " +  currency +
                            " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
-                           vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[
-                               TBL_VOLUME].map(str))
+                           vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + vol_grp_ask[
+                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_ask['total_price'].map(str))
 
     # Save data global
     shape_ask[combined] = vol_grp_ask
