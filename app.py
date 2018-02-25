@@ -60,7 +60,7 @@ class Pair:
     threadWebsocket = {}
     threadPrepare = {}
     threadRecalc = {}
-
+    Dataprepared = False
     def __init__(self, pExchange, pTicker):
         self.name = pExchange + " " + pTicker
         self.ticker = pTicker
@@ -121,8 +121,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     try:
         first_ask = float(ask_tbl.iloc[1, 0])
     except (IndexError):
-        print("Empty data for " + combined + " Will wait 2s")
-        time.sleep(2)
+        print("Empty data for " + combined + " Will wait 3s")
+        time.sleep(3)
         return False
     # prepare Price
     ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
@@ -134,11 +134,10 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     # get first on each side
     first_ask = float(ask_tbl.iloc[1, 0])
-    first_bid = float(bid_tbl.iloc[1, 0])
 
     # get perc for ask/ bid
     perc_above_first_ask = ((1.0 + range) * first_ask)
-    perc_above_first_bid = ((1.0 - range) * first_bid)
+    perc_above_first_bid = ((1.0 - range) * first_ask)
 
     # limits the size of the table so that we only look at orders 5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
@@ -158,19 +157,19 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     while i < ob_points:
         # Get Borders for ask/ bid
         current_ask_border = first_ask + (i * ob_step)
-        current_bid_border = first_bid - (i * ob_step)
+        current_bid_border = first_ask - (i * ob_step)
 
         # Get Volume
         current_ask_volume = ask_tbl.loc[
             (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), TBL_VOLUME].sum()
         current_bid_volume = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
+            (bid_tbl[TBL_PRICE] <= first_ask) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
 
         # Get Adresses
         current_ask_adresses = ask_tbl.loc[
             (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), 'address'].sum()
         current_bid_adresses = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].sum()
+            (bid_tbl[TBL_PRICE] <= first_ask) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].sum()
 
         # Save Data
         ob_ask.loc[i - 1] = [current_ask_border, current_ask_volume, current_ask_adresses]
@@ -178,9 +177,13 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         i += 1
 
     # Get Market Price
-    mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
+    try:
+       mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
                     bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, 2)
-
+    except (IndexError):
+        print("Empty data for " + combined + " Will wait 2s")
+        time.sleep(3)
+        return False
     bid_tbl = bid_tbl.iloc[::-1]  # flip the bid table so that the merged full_tbl is in logical order
 
     fulltbl = bid_tbl.append(ask_tbl)  # append the buy and sell side tables to create one cohesive table
@@ -312,11 +315,7 @@ static_content_before = [
         'and hide/show buttons to pick which currency pairs to display. '
         'Only displays orders greater than or equal to 1% of the volume of the portion of the order book displayed. '
         'If annotations overlap or bubbles cluster click "Freeze all" and then zoom in on the area of interest.'
-        ' See GitHub for further details.'),
-    html.A(html.Button('Freeze all'),
-           href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();"),
-    html.A(html.Button('Colorblind Mode'), href="javascript:(function(){setInterval(colorblindInt,100);})()")
+        ' See GitHub for further details.')
 ]
 
 static_content_after = dcc.Interval(
@@ -456,14 +455,11 @@ def prepare_send():
     lCache = []
     cData = get_All_data()
     for pair in PAIRS:
-        if (pair.prepare):
+        if (pair.Dataprepared):
             ticker = pair.ticker
             exchange = pair.exchange
-            graph = 'live-graph-' + exchange + ticker.lower().replace('-', '')
+            graph = 'live-graph-' + exchange +"-"+ ticker
             lCache.append(html.Br())
-            lCache.append(html.Br())
-            lCache.append(html.A(html.Button('Hide/ Show ' + exchange + " " + ticker),
-                                 href='javascript:(function(){if(document.getElementById("' + graph + '").style.display==""){document.getElementById("' + graph + '").style.display="none"}else{document.getElementById("' + graph + '").style.display=""}})()'))
             lCache.append(dcc.Graph(
                 id=graph,
                 figure=cData[exchange + ticker]
@@ -522,13 +518,13 @@ def watchdog():
             target=websockThread, args=(pair,))
         pair.threadWebsocket.daemon = False
         pair.threadWebsocket.start()
-        time.sleep(3)
+        time.sleep(4)
     print("Web sockets up")
     for pair in PAIRS:
         pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
         pair.threadRecalc.daemon = False
         pair.threadRecalc.start()
-        time.sleep(2)
+        time.sleep(3)
     print("ReCalc up")
     for pair in PAIRS:
         pair.threadPrepare = threading.Thread(
@@ -596,7 +592,7 @@ def recalcThread(pair):
     while True:
         if (pair.websocket):
             count = count + 1 if (not calc_data(pair)) else 0
-            if count > 10:
+            if count > 5:
                 print("Going to kill Web socket from " + pair.ticker)
                 count = -5
                 pair.threadWebsocket._stop()
@@ -605,7 +601,7 @@ def recalcThread(pair):
 def websockThread(pair):
     pair.websocket = False
     pair.ob_Inst = GDaxBook(pair.ticker)
-    time.sleep(3)
+    time.sleep(5)
     pair.websocket = True
     while True:
         time.sleep(4)
@@ -619,6 +615,7 @@ def preparePairThread(pair):
     while True:
         if (pair.prepare):
             prepared[cbn] = prepare_data(ticker, exc)
+            pair.Dataprepared=True
         time.sleep(0.5)
 
 
