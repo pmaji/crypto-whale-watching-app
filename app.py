@@ -216,8 +216,10 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     # Get Dataset for Volume Grouping
     vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
-    vol_grp_bid.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
     vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
+
+    # Rename column names for Volume Grouping
+    vol_grp_bid.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
     vol_grp_ask.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
 
     # Filter data by min Volume, more than 1 (intefere with bubble), less than 70 (mostly 1 or 0.5 ETH humans)
@@ -255,7 +257,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
                            vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + vol_grp_bid[
                                TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_bid['total_price'].map(str))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(
-        str) + " " +  currency +
+        str) + " " + currency +
                            " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
                            vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + vol_grp_ask[
                                TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_ask['total_price'].map(str))
