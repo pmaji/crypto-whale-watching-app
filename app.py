@@ -134,11 +134,10 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     # get first on each side
     first_ask = float(ask_tbl.iloc[1, 0])
-    first_bid = float(bid_tbl.iloc[1, 0])
 
     # get perc for ask/ bid
     perc_above_first_ask = ((1.0 + range) * first_ask)
-    perc_above_first_bid = ((1.0 - range) * first_bid)
+    perc_above_first_bid = ((1.0 - range) * first_ask)
 
     # limits the size of the table so that we only look at orders 5% above and under market price
     ask_tbl = ask_tbl[(ask_tbl[TBL_PRICE] <= perc_above_first_ask)]
@@ -158,19 +157,19 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     while i < ob_points:
         # Get Borders for ask/ bid
         current_ask_border = first_ask + (i * ob_step)
-        current_bid_border = first_bid - (i * ob_step)
+        current_bid_border = first_ask - (i * ob_step)
 
         # Get Volume
         current_ask_volume = ask_tbl.loc[
             (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), TBL_VOLUME].sum()
         current_bid_volume = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
+            (bid_tbl[TBL_PRICE] <= first_ask) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
 
         # Get Adresses
         current_ask_adresses = ask_tbl.loc[
             (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), 'address'].sum()
         current_bid_adresses = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].sum()
+            (bid_tbl[TBL_PRICE] <= first_ask) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].sum()
 
         # Save Data
         ob_ask.loc[i - 1] = [current_ask_border, current_ask_volume, current_ask_adresses]
@@ -312,11 +311,7 @@ static_content_before = [
         'and hide/show buttons to pick which currency pairs to display. '
         'Only displays orders greater than or equal to 1% of the volume of the portion of the order book displayed. '
         'If annotations overlap or bubbles cluster click "Freeze all" and then zoom in on the area of interest.'
-        ' See GitHub for further details.'),
-    html.A(html.Button('Freeze all'),
-           href="javascript:var k = setTimeout(function() {for (var i = k; i > 0; i--){ clearInterval(i)}},1);"),
-    html.A(html.Button('Un-freeze all'), href="javascript:location.reload();"),
-    html.A(html.Button('Colorblind Mode'), href="javascript:(function(){setInterval(colorblindInt,100);})()")
+        ' See GitHub for further details.')
 ]
 
 static_content_after = dcc.Interval(
@@ -459,11 +454,8 @@ def prepare_send():
         if (pair.prepare):
             ticker = pair.ticker
             exchange = pair.exchange
-            graph = 'live-graph-' + exchange + ticker.lower().replace('-', '')
+            graph = 'live-graph-' + exchange +"-"+ ticker
             lCache.append(html.Br())
-            lCache.append(html.Br())
-            lCache.append(html.A(html.Button('Hide/ Show ' + exchange + " " + ticker),
-                                 href='javascript:(function(){if(document.getElementById("' + graph + '").style.display==""){document.getElementById("' + graph + '").style.display="none"}else{document.getElementById("' + graph + '").style.display=""}})()'))
             lCache.append(dcc.Graph(
                 id=graph,
                 figure=cData[exchange + ticker]
