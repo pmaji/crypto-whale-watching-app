@@ -28,7 +28,8 @@ from gdax_book import GDaxBook
 # creating variables to reduce hard-coding later on / facilitate later paramterization
 serverPort = 8050
 clientRefresh = 1
-js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
+js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later 
+#js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
@@ -181,7 +182,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
        mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
                     bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, 2)
     except (IndexError):
-        print("Empty data for " + combined + " Will wait 2s")
+        print("Empty data for " + combined + " Will wait 3s")
         time.sleep(3)
         return False
     bid_tbl = bid_tbl.iloc[::-1]  # flip the bid table so that the merged full_tbl is in logical order
@@ -317,6 +318,13 @@ static_content_before = [
         'If annotations overlap or bubbles cluster click "Freeze all" and then zoom in on the area of interest.'
         ' See GitHub for further details.')
 ]
+cCache = []
+for pair in PAIRS:
+    ticker = pair.ticker
+    exchange = pair.exchange
+    graph = 'live-graph-' + exchange +"-"+ ticker
+    cCache.append(html.Br())
+    cCache.append(html.Div(id=graph))
 
 static_content_after = dcc.Interval(
     id='main-interval-component',
@@ -325,7 +333,7 @@ static_content_after = dcc.Interval(
 )
 app.layout = html.Div(id='main_container', children=[
     html.Div(static_content_before),
-    html.Div(id='graphs_Container'),
+    html.Div(id='graphs_Container', children=cCache),
     html.Div(static_content_after),
 ])
 
@@ -455,15 +463,16 @@ def prepare_send():
     lCache = []
     cData = get_All_data()
     for pair in PAIRS:
+        ticker = pair.ticker
+        exchange = pair.exchange
+        graph = 'live-graph-' + exchange +"-"+ ticker
+        lCache.append(html.Br())
         if (pair.Dataprepared):
-            ticker = pair.ticker
-            exchange = pair.exchange
-            graph = 'live-graph-' + exchange +"-"+ ticker
-            lCache.append(html.Br())
             lCache.append(dcc.Graph(
                 id=graph,
                 figure=cData[exchange + ticker]
             ))
+        else: lCache.append(html.Div(id=graph))
     return lCache
 
 
