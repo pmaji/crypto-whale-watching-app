@@ -173,7 +173,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         
         # Save Data
         ob_ask.loc[i - 1] = [current_ask_border, current_ask_volume, current_ask_adresses]
-        ob_bid.loc[i - 1] = [current_border, current_volume, current_adresses]
+        ob_bid.loc[i - 1] = [current_bid_border, current_bid_volume, current_bid_adresses]
         i += 1
 
     # Get Market Price
