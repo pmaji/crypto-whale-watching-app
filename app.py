@@ -274,9 +274,9 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     # making the tooltip column for our charts
     final_tbl['text'] = (
-            "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
+            "There is a " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " order for " + symbol + final_tbl[
         TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-        str) + " unique orders for a total price of " + symbol + final_tbl['total_price'].map(str))
+        str) + " unique orders worth " + symbol + final_tbl['total_price'].map(str))
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
     # Buys are green, Sells are Red. Probably WHALES are highlighted by being brighter, detected by unqiue order count.
