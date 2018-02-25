@@ -177,9 +177,13 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         i += 1
 
     # Get Market Price
-    mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
+    try:
+       mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
                     bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, 2)
-
+    except (IndexError):
+        print("Empty data for " + combined + " Will wait 2s")
+        time.sleep(2)
+        return False
     bid_tbl = bid_tbl.iloc[::-1]  # flip the bid table so that the merged full_tbl is in logical order
 
     fulltbl = bid_tbl.append(ask_tbl)  # append the buy and sell side tables to create one cohesive table
@@ -588,7 +592,7 @@ def recalcThread(pair):
     while True:
         if (pair.websocket):
             count = count + 1 if (not calc_data(pair)) else 0
-            if count > 10:
+            if count > 5:
                 print("Going to kill Web socket from " + pair.ticker)
                 count = -5
                 pair.threadWebsocket._stop()
