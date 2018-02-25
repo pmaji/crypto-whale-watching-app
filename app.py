@@ -60,7 +60,7 @@ class Pair:
     threadWebsocket = {}
     threadPrepare = {}
     threadRecalc = {}
-
+    Dataprepared = False
     def __init__(self, pExchange, pTicker):
         self.name = pExchange + " " + pTicker
         self.ticker = pTicker
@@ -121,8 +121,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     try:
         first_ask = float(ask_tbl.iloc[1, 0])
     except (IndexError):
-        print("Empty data for " + combined + " Will wait 2s")
-        time.sleep(2)
+        print("Empty data for " + combined + " Will wait 3s")
+        time.sleep(3)
         return False
     # prepare Price
     ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
@@ -182,7 +182,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
                     bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, 2)
     except (IndexError):
         print("Empty data for " + combined + " Will wait 2s")
-        time.sleep(2)
+        time.sleep(3)
         return False
     bid_tbl = bid_tbl.iloc[::-1]  # flip the bid table so that the merged full_tbl is in logical order
 
@@ -455,7 +455,7 @@ def prepare_send():
     lCache = []
     cData = get_All_data()
     for pair in PAIRS:
-        if (pair.prepare):
+        if (pair.Dataprepared):
             ticker = pair.ticker
             exchange = pair.exchange
             graph = 'live-graph-' + exchange +"-"+ ticker
@@ -518,13 +518,13 @@ def watchdog():
             target=websockThread, args=(pair,))
         pair.threadWebsocket.daemon = False
         pair.threadWebsocket.start()
-        time.sleep(3)
+        time.sleep(4)
     print("Web sockets up")
     for pair in PAIRS:
         pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
         pair.threadRecalc.daemon = False
         pair.threadRecalc.start()
-        time.sleep(2)
+        time.sleep(3)
     print("ReCalc up")
     for pair in PAIRS:
         pair.threadPrepare = threading.Thread(
@@ -601,7 +601,7 @@ def recalcThread(pair):
 def websockThread(pair):
     pair.websocket = False
     pair.ob_Inst = GDaxBook(pair.ticker)
-    time.sleep(3)
+    time.sleep(5)
     pair.websocket = True
     while True:
         time.sleep(4)
@@ -615,6 +615,7 @@ def preparePairThread(pair):
     while True:
         if (pair.prepare):
             prepared[cbn] = prepare_data(ticker, exc)
+            pair.Dataprepared=True
         time.sleep(0.5)
 
 
