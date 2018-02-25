@@ -8,7 +8,7 @@ var iInit=setInterval(init,50);
 function init(){
 	if(!window.jQuery){
 		console.log("jQuery not loaded yet");
-	}elseif (getGraphs().length==0){
+	}else if(getGraphs().length==0){
 		console.log("No graphs loaded yet");
 	}else{
 		clearInterval(iInit);
