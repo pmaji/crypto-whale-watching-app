@@ -62,6 +62,7 @@ class Pair:
     threadPrepare = {}
     threadRecalc = {}
     Dataprepared = False
+    webSocketKill = 1
     def __init__(self, pExchange, pTicker):
         self.name = pExchange + " " + pTicker
         self.ticker = pTicker
@@ -533,7 +534,7 @@ def watchdog():
         pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
         pair.threadRecalc.daemon = False
         pair.threadRecalc.start()
-        time.sleep(3)
+    time.sleep(5)
     print("ReCalc up")
     for pair in PAIRS:
         pair.threadPrepare = threading.Thread(
@@ -604,7 +605,7 @@ def recalcThread(pair):
             if count > 5:
                 print("Going to kill Web socket from " + pair.ticker)
                 count = -5
-                pair.threadWebsocket._stop()
+                pair.webSocketKill = 0
 
 
 def websockThread(pair):
@@ -613,6 +614,7 @@ def websockThread(pair):
     time.sleep(5)
     pair.websocket = True
     while True:
+        kill = 5 / pair.webSocketKill
         time.sleep(4)
 
 
