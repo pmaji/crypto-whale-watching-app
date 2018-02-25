@@ -10,7 +10,7 @@ function init(){
 		console.log("jQuery not loaded yet");
 	}else{
 		clearInterval(iInit);
-		setTimeout(addSidebar,3000);
+		addSidebar();
 	}
 }
 function dynamicallyLoadScript(url) {
