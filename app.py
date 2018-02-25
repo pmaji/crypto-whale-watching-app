@@ -28,7 +28,7 @@ from gdax_book import GDaxBook
 # creating variables to reduce hard-coding later on / facilitate later paramterization
 serverPort = 8050
 clientRefresh = 1
-js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later 
+js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later
 #js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TBL_PRICE = 'price'
@@ -75,7 +75,9 @@ class Pair:
 
 PAIRS = []  # Array containing all pairs
 E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-EUR", "ETH-BTC",
-                           "BTC-USD", "BTC-EUR", "BTC-GBP", "LTC-USD", "LTC-EUR", "LTC-BTC", "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
+                           "BTC-USD", "BTC-EUR", "BTC-GBP",
+                           "LTC-USD", "LTC-EUR", "LTC-BTC",
+                           "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
 for ticker in E_GDAX.ticker:
     cObj = Pair(E_GDAX.name, ticker)
     PAIRS.append(cObj)
