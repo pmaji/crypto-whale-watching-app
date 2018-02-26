@@ -28,6 +28,7 @@ from gdax_book import GDaxBook
 # creating variables to reduce hard-coding later on / facilitate later parameterization
 serverPort = 8050
 clientRefresh = 1
+desiredPairRefresh = 30000 # in ms
 js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later
 #js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
@@ -43,6 +44,7 @@ timeStamps = {}  # For storing timestamp from calc start at calc end
 sendCache = {}
 first_prepare = True
 first_pull = True
+overallNewData = False
 
 
 class Exchange:
@@ -63,6 +65,9 @@ class Pair:
     threadRecalc = {}
     Dataprepared = False
     webSocketKill = 1
+    lastStamp = 0
+    usedStamp = 0
+    newData = False
     def __init__(self, pExchange, pTicker):
         self.name = pExchange + " " + pTicker
         self.ticker = pTicker
@@ -111,6 +116,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     if pair.exchange == E_GDAX.name:
         # order_book = gdax.PublicClient().get_product_order_book(ticker, level=3)
         order_book = pair.ob_Inst.get_current_book()
+        pair.usedStamp = getStamp()
         ask_tbl = pd.DataFrame(data=order_book['asks'], columns=[
             TBL_PRICE, TBL_VOLUME, 'address'])
         bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[
@@ -297,6 +303,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     marketPrice[combined] = mp  # save market price
 
+    pair.newData = True
     pair.prepare = True  # just used for first enabling of send prepare
     return True
 
@@ -348,6 +355,7 @@ app.layout = html.Div(id='main_container', children=[
 def prepare_data(ticker, exchange):
     combined = exchange + ticker
     data = get_data_cache(combined)
+    pair.newData = False
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
     x_min = min([shape_bid[combined]['volume'].min(),
@@ -534,13 +542,13 @@ def watchdog():
             target=websockThread, args=(pair,))
         pair.threadWebsocket.daemon = False
         pair.threadWebsocket.start()
-        time.sleep(4)
+        time.sleep(3)
     print("Web sockets up")
     for pair in PAIRS:
         pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
         pair.threadRecalc.daemon = False
         pair.threadRecalc.start()
-    time.sleep(5)
+        time.sleep(2.5)
     print("ReCalc up")
     for pair in PAIRS:
         pair.threadPrepare = threading.Thread(
@@ -600,18 +608,32 @@ def sendPrepareThread():
     global sendCache, first_prepare
     while True:
         sendCache = prepare_send()
+        overallNewData = False
         time.sleep(0.5)
+        while not overallNewData:
+          time.sleep(0.5)
 
 
 def recalcThread(pair):
     count = 0
+    refreshes = 0
     while True:
         if (pair.websocket):
-            count = count + 1 if (not calc_data(pair)) else 0
+          dif = getStamp() - pair.lastStamp
+          if dif > desiredPairRefresh:
+            print(datetime.now().strftime("%H:%M:%S")+"  :   Ms Diff for " + pair.ticker + " is " + str(dif) + " Total refreshes for pair " + str(refreshes))
+            refreshes += 1
+            if not calc_data(pair):
+               count = count + 1 
+            else:
+               count = 0
+               pair.lastStamp = pair.usedStamp
             if count > 5:
                 print("Going to kill Web socket from " + pair.ticker)
                 count = -5
                 pair.webSocketKill = 0
+          else:
+            time.sleep((desiredPairRefresh-dif)/1000)
 
 
 def websockThread(pair):
@@ -632,8 +654,10 @@ def preparePairThread(pair):
     while True:
         if (pair.prepare):
             prepared[cbn] = prepare_data(ticker, exc)
+            overallNewData = True
             pair.Dataprepared=True
-        time.sleep(0.5)
+        while not pair.newData:
+            time.sleep(0.2)
 
 
 if __name__ == '__main__':
