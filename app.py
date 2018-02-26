@@ -25,7 +25,7 @@ from queue import Queue
 
 from gdax_book import GDaxBook
 
-# creating variables to reduce hard-coding later on / facilitate later paramterization
+# creating variables to reduce hard-coding later on / facilitate later parameterization
 serverPort = 8050
 clientRefresh = 1
 js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later
