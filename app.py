@@ -572,6 +572,7 @@ def watchdog():
                 alive = False
                 print("Restarting pair Web socket " +
                       pair.exchange + " " + pair.ticker)
+                pair.webSocketKill = 0
                 pair.threadWebsocket = threading.Thread(
                     target=websockThread, args=(pair,))
                 pair.threadWebsocket.daemon = False
@@ -605,7 +606,7 @@ def serverThread():
 
 
 def sendPrepareThread():
-    global sendCache, first_prepare
+    global sendCache, first_prepare, overallNewData
     while True:
         sendCache = prepare_send()
         overallNewData = False
@@ -647,7 +648,7 @@ def websockThread(pair):
 
 
 def preparePairThread(pair):
-    global prepared
+    global prepared, overallNewData
     ticker = pair.ticker
     exc = pair.exchange
     cbn = exc + ticker
