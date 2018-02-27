@@ -25,6 +25,8 @@ function freeze(){
 		location.reload();
 	}else{
 		var k = setTimeout(function() {
+				bFreeze = True;
+				$('button#bFreeze').eq(0).text("Unfreeze");
 				for (var i = k; i > 0; i--){ clearInterval(i)}
 				if(bCBlind){iCBlind=setInterval(colorblindInt,100);}
 			},1);
@@ -32,9 +34,12 @@ function freeze(){
 }
 function tColorBlind(){
 	if(bCBlind){
+		bCBlind=false;
+		$('button#Colorblind trigger').eq(0).text("Activate Colorblind")
 		clearInterval(iCBlind);
 	}else{
 		bCBlind=true;
+		$('button#Colorblind trigger').eq(0).text("Deactivate Colorblind");
 		iCBlind=setInterval(colorblindInt,100);
 	}
 }
@@ -79,7 +84,7 @@ function addSidebar(){
 	cStyle += "font-family: Arial";
 	$('body').eq(0).attr('style',cStyle);
 	sideB.append('<button id="bFreeze" onclick="freeze()">Toggle Freeze</button><br><br>')
-	sideB.append('<button id="Colorblind trigger" onclick="tColorBlind()">Toggle Colorblind</button><br><br>')
+	sideB.append('<button id="Colorblind trigger" onclick="tColorBlind()">Activate Colorblind</button><br><br>')
 	sideB.append('<p id="showHeader">Show/Hide Graphs:</p>')
 	var aPairs = getGraphs();
 	for (var i=0;i<aPairs.length;i++){
