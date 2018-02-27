@@ -25,10 +25,11 @@ from queue import Queue
 
 from gdax_book import GDaxBook
 
-# creating variables to reduce hard-coding later on / facilitate later paramterization
+# creating variables to reduce hard-coding later on / facilitate later parameterization
 serverPort = 8050
 clientRefresh = 1
-js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later 
+desiredPairRefresh = 30000 # in ms
+js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later
 #js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TBL_PRICE = 'price'
@@ -43,6 +44,7 @@ timeStamps = {}  # For storing timestamp from calc start at calc end
 sendCache = {}
 first_prepare = True
 first_pull = True
+overallNewData = False
 
 
 class Exchange:
@@ -62,6 +64,10 @@ class Pair:
     threadPrepare = {}
     threadRecalc = {}
     Dataprepared = False
+    webSocketKill = 1
+    lastStamp = 0
+    usedStamp = 0
+    newData = False
     def __init__(self, pExchange, pTicker):
         self.name = pExchange + " " + pTicker
         self.ticker = pTicker
@@ -73,8 +79,10 @@ class Pair:
 
 
 PAIRS = []  # Array containing all pairs
-E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-BTC", "BTC-USD",
-                           "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR", "BCH-USD", "BCH-BTC", "BCH-EUR"], 0)
+E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-EUR", "ETH-BTC",
+                           "BTC-USD", "BTC-EUR", "BTC-GBP",
+                           "LTC-USD", "LTC-EUR", "LTC-BTC",
+                           "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
 for ticker in E_GDAX.ticker:
     cObj = Pair(E_GDAX.name, ticker)
     PAIRS.append(cObj)
@@ -108,6 +116,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     if pair.exchange == E_GDAX.name:
         # order_book = gdax.PublicClient().get_product_order_book(ticker, level=3)
         order_book = pair.ob_Inst.get_current_book()
+        pair.usedStamp = getStamp()
         ask_tbl = pd.DataFrame(data=order_book['asks'], columns=[
             TBL_PRICE, TBL_VOLUME, 'address'])
         bid_tbl = pd.DataFrame(data=order_book['bids'], columns=[
@@ -211,16 +220,16 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
+    bid_tbl['total_price'] = bid_tbl['volume'] * bid_tbl['price']
+    ask_tbl['total_price'] = ask_tbl['volume'] * ask_tbl['price']
 
     # Get Dataset for Volume Grouping
-    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
-        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
-    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum}).rename(
-        columns={'amin': 'min_Price', 'amax': 'max_Price', 'sum': TBL_VOLUME})
+    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
+    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
 
-    # Get rid of header group row
-    vol_grp_bid.columns = vol_grp_bid.columns.droplevel(0)
-    vol_grp_ask.columns = vol_grp_ask.columns.droplevel(0)
+    # Rename column names for Volume Grouping
+    vol_grp_bid.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
+    vol_grp_ask.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
 
     # Filter data by min Volume, more than 1 (intefere with bubble), less than 70 (mostly 1 or 0.5 ETH humans)
     vol_grp_bid = vol_grp_bid[
@@ -246,17 +255,21 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     vol_grp_bid['max_Price'] = vol_grp_bid['max_Price'].apply(round_sig, args=(3, 0, 2))
     vol_grp_ask['max_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3, 0, 2))
 
-    # Append individual text to each elem
+    # Round and format the Total Price
+    vol_grp_bid['total_price'] = (vol_grp_bid['total_price'].round(2).apply(lambda x: "{:,}".format(x)))
+    vol_grp_ask['total_price'] = (vol_grp_ask['total_price'].round(2).apply(lambda x: "{:,}".format(x)))
+
+    # Append individual text to each element
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(
         str) + " " + currency +
                            " each, from " + symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
-                           vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_bid[
-                               TBL_VOLUME].map(str))
+                           vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + vol_grp_bid[
+                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_bid['total_price'].map(str))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(
         str) + " " + currency +
                            " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
-                           vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + currency + vol_grp_ask[
-                               TBL_VOLUME].map(str))
+                           vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + vol_grp_ask[
+                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_ask['total_price'].map(str))
 
     # Save data global
     shape_ask[combined] = vol_grp_ask
@@ -270,9 +283,9 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     # making the tooltip column for our charts
     final_tbl['text'] = (
-            "There are " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " available for " + symbol + final_tbl[
+            "There is a " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " order for " + symbol + final_tbl[
         TBL_PRICE].map(str) + " being offered by " + final_tbl['n_unique_orders'].map(
-        str) + " unique orders for a total price of " + symbol + final_tbl['total_price'].map(str))
+        str) + " unique orders worth " + symbol + final_tbl['total_price'].map(str))
 
     # determine buys / sells relative to last market price; colors price bubbles based on size
     # Buys are green, Sells are Red. Probably WHALES are highlighted by being brighter, detected by unqiue order count.
@@ -290,6 +303,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     marketPrice[combined] = mp  # save market price
 
+    pair.newData = True
     pair.prepare = True  # just used for first enabling of send prepare
     return True
 
@@ -341,6 +355,7 @@ app.layout = html.Div(id='main_container', children=[
 def prepare_data(ticker, exchange):
     combined = exchange + ticker
     data = get_data_cache(combined)
+    pair.newData = False
     base_currency = ticker.split("-")[1]
     symbol = SYMBOLS.get(base_currency.upper(), "")
     x_min = min([shape_bid[combined]['volume'].min(),
@@ -527,13 +542,13 @@ def watchdog():
             target=websockThread, args=(pair,))
         pair.threadWebsocket.daemon = False
         pair.threadWebsocket.start()
-        time.sleep(4)
+        time.sleep(3)
     print("Web sockets up")
     for pair in PAIRS:
         pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
         pair.threadRecalc.daemon = False
         pair.threadRecalc.start()
-        time.sleep(3)
+        time.sleep(2.5)
     print("ReCalc up")
     for pair in PAIRS:
         pair.threadPrepare = threading.Thread(
@@ -557,6 +572,7 @@ def watchdog():
                 alive = False
                 print("Restarting pair Web socket " +
                       pair.exchange + " " + pair.ticker)
+                pair.webSocketKill = 0
                 pair.threadWebsocket = threading.Thread(
                     target=websockThread, args=(pair,))
                 pair.threadWebsocket.daemon = False
@@ -590,21 +606,35 @@ def serverThread():
 
 
 def sendPrepareThread():
-    global sendCache, first_prepare
+    global sendCache, first_prepare, overallNewData
     while True:
         sendCache = prepare_send()
+        overallNewData = False
         time.sleep(0.5)
+        while not overallNewData:
+          time.sleep(0.5)
 
 
 def recalcThread(pair):
     count = 0
+    refreshes = 0
     while True:
         if (pair.websocket):
-            count = count + 1 if (not calc_data(pair)) else 0
+          dif = getStamp() - pair.lastStamp
+          if dif > desiredPairRefresh:
+            print(datetime.now().strftime("%H:%M:%S")+"  :   Ms Diff for " + pair.ticker + " is " + str(dif) + " Total refreshes for pair " + str(refreshes))
+            refreshes += 1
+            if not calc_data(pair):
+               count = count + 1 
+            else:
+               count = 0
+               pair.lastStamp = pair.usedStamp
             if count > 5:
                 print("Going to kill Web socket from " + pair.ticker)
                 count = -5
-                pair.threadWebsocket._stop()
+                pair.webSocketKill = 0
+          else:
+            time.sleep((desiredPairRefresh-dif)/1000)
 
 
 def websockThread(pair):
@@ -613,19 +643,22 @@ def websockThread(pair):
     time.sleep(5)
     pair.websocket = True
     while True:
+        kill = 5 / pair.webSocketKill
         time.sleep(4)
 
 
 def preparePairThread(pair):
-    global prepared
+    global prepared, overallNewData
     ticker = pair.ticker
     exc = pair.exchange
     cbn = exc + ticker
     while True:
         if (pair.prepare):
             prepared[cbn] = prepare_data(ticker, exc)
+            overallNewData = True
             pair.Dataprepared=True
-        time.sleep(0.5)
+        while not pair.newData:
+            time.sleep(0.2)
 
 
 if __name__ == '__main__':
