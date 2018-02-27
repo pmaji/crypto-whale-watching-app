@@ -572,7 +572,7 @@ def watchdog():
                 alive = False
                 print("Restarting pair Web socket " +
                       pair.exchange + " " + pair.ticker)
-                pair.webSocketKill = 0
+                pair.webSocketKill = 1
                 pair.threadWebsocket = threading.Thread(
                     target=websockThread, args=(pair,))
                 pair.threadWebsocket.daemon = False
