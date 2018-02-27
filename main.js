@@ -25,7 +25,7 @@ function freeze(){
 		location.reload();
 	}else{
 		var k = setTimeout(function() {
-				bFreeze = True;
+				bFreeze = true;
 				$('button#bFreeze').eq(0).text("Unfreeze");
 				for (var i = k; i > 0; i--){ clearInterval(i)}
 				if(bCBlind){iCBlind=setInterval(colorblindInt,100);}
