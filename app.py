@@ -29,8 +29,8 @@ from gdax_book import GDaxBook
 serverPort = 8050
 clientRefresh = 1
 desiredPairRefresh = 30000 # in ms
-js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # replace later
-#js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
+#js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # just needed during development replace later
+js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
