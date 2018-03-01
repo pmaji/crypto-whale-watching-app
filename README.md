@@ -46,7 +46,7 @@ In addition to the main views which provide at-a-glance information about the la
 
 In the image above we are looking at a zoom-in on the chart of ETH/USD. The bubble that we have hovered over on the left hand side is bright green in color given that we are highly confident that this is a single price-point whale. We can see that this is one unique buy order placed for 179.55 ETH at the $859.01 price point, valued at $154,235.25. 
 
-<img src="https://raw.githubusercontent.com/pmaji/crypto-whale-watching-app/master/screenshots/ladder_tooltip_screenshot.JPG" width="400" height="150">
+<img src="https://raw.githubusercontent.com/pmaji/crypto-whale-watching-app/master/screenshots/ladder_tooltip_screenshot.JPG" width="400" height="125">
 
 In the image above we are looking at the same chart for ETH/USD, but now zoomed in on a zone towards the other end of x-axis (so we're looking at much larger orders), hovering over a large ladder price-point whale. Here we can see that the tooltip calls out the total number of rungs on the ladder--9 orders of 50 ETH each--as well as the price range in which those orders are found, and the total market value of those orders. The thickness of the line is also proportional to the size of each rung on the order ladder.
 
