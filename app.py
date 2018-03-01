@@ -23,6 +23,7 @@ import time
 import threading
 from queue import Queue
 
+# custom library
 from gdax_book import GDaxBook
 
 # creating variables to reduce hard-coding later on / facilitate later parameterization
