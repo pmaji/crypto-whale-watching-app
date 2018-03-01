@@ -32,6 +32,7 @@ clientRefresh = 1
 desiredPairRefresh = 30000 # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
 #js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # just needed during development replace later
 js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
+noDouble = True # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
@@ -221,6 +222,12 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
+    
+    #Following lines fix double drawing of orders in case it´s a ladder but bigger than 1%
+    if noDouble:
+       bid_tbl = bid_tbl[(bid_tbl['volume']<minVolume)]
+       ask_tbl = ask_tbl[(ask_tbl['volume']<minVolume)]   
+    
     bid_tbl['total_price'] = bid_tbl['volume'] * bid_tbl['price']
     ask_tbl['total_price'] = ask_tbl['volume'] * ask_tbl['price']
 
