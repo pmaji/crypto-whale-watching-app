@@ -29,7 +29,7 @@ from gdax_book import GDaxBook
 # creating variables to reduce hard-coding later on / facilitate later parameterization
 serverPort = 8050
 clientRefresh = 1
-desiredPairRefresh = 30000 # in ms
+desiredPairRefresh = 30000 # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
 #js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # just needed during development replace later
 js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
