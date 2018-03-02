@@ -29,11 +29,11 @@ from gdax_book import GDaxBook
 # creating variables to reduce hard-coding later on / facilitate later parameterization
 serverPort = 8050
 clientRefresh = 1
-desiredPairRefresh = 30000 # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
-#js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # just needed during development replace later
+desiredPairRefresh = 30000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
+# js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # just needed during development replace later
 js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
-noDouble = True # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
-SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"}
+noDouble = True  # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
+SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"} # used for the tooltip
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
@@ -60,7 +60,7 @@ class Exchange:
 
 
 class Pair:
-    # Class to store a pair with his threads
+    # Class to store a pair with its respective threads
     ob_Inst = {}
     threadWebsocket = {}
     threadPrepare = {}
@@ -70,6 +70,7 @@ class Pair:
     lastStamp = 0
     usedStamp = 0
     newData = False
+
     def __init__(self, pExchange, pTicker):
         self.name = pExchange + " " + pTicker
         self.ticker = pTicker
@@ -136,6 +137,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         print("Empty data for " + combined + " Will wait 3s")
         time.sleep(3)
         return False
+
     # prepare Price
     ask_tbl[TBL_PRICE] = pd.to_numeric(ask_tbl[TBL_PRICE])
     bid_tbl[TBL_PRICE] = pd.to_numeric(bid_tbl[TBL_PRICE])
@@ -190,8 +192,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     # Get Market Price
     try:
-       mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
-                    bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, 2)
+        mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
+                        bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, 2)
     except (IndexError):
         print("Empty data for " + combined + " Will wait 3s")
         time.sleep(3)
@@ -222,18 +224,20 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
-    
-    #Following lines fix double drawing of orders in case it´s a ladder but bigger than 1%
+
+    # Following lines fix double drawing of orders in case it´s a ladder but bigger than 1%
     if noDouble:
-       bid_tbl = bid_tbl[(bid_tbl['volume']<minVolume)]
-       ask_tbl = ask_tbl[(ask_tbl['volume']<minVolume)]   
-    
+        bid_tbl = bid_tbl[(bid_tbl['volume'] < minVolume)]
+        ask_tbl = ask_tbl[(ask_tbl['volume'] < minVolume)]
+
     bid_tbl['total_price'] = bid_tbl['volume'] * bid_tbl['price']
     ask_tbl['total_price'] = ask_tbl['volume'] * ask_tbl['price']
 
     # Get Dataset for Volume Grouping
-    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
-    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg({TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
+    vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg(
+        {TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
+    vol_grp_ask = ask_tbl.groupby([TBL_VOLUME]).agg(
+        {TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
 
     # Rename column names for Volume Grouping
     vol_grp_bid.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
@@ -272,12 +276,14 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         str) + " " + currency +
                            " each, from " + symbol + vol_grp_bid['min_Price'].map(str) + " to " + symbol +
                            vol_grp_bid['max_Price'].map(str) + " resulting in a total of " + vol_grp_bid[
-                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_bid['total_price'].map(str))
+                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_bid[
+                               'total_price'].map(str))
     vol_grp_ask['text'] = ("There are " + vol_grp_ask['count'].map(str) + " orders " + vol_grp_ask['unique'].map(
         str) + " " + currency +
                            " each, from " + symbol + vol_grp_ask['min_Price'].map(str) + " to " + symbol +
                            vol_grp_ask['max_Price'].map(str) + " resulting in a total of " + vol_grp_ask[
-                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_ask['total_price'].map(str))
+                               TBL_VOLUME].map(str) + " " + currency + " worth " + symbol + vol_grp_ask[
+                               'total_price'].map(str))
 
     # Save data global
     shape_ask[combined] = vol_grp_ask
@@ -319,7 +325,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 # begin building the dash itself
 app = dash.Dash()
 app.scripts.append_script({"external_url": js_extern})
-# simple layout that can be improved with better CSS later, but it does the job for now
+# simple layout that can be improved with better CSS/JS later, but it does the job for now
+# static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
     html.H3('Donations greatly appreciated; will go towards hosting / development'),
@@ -344,13 +351,12 @@ cCache = []
 for pair in PAIRS:
     ticker = pair.ticker
     exchange = pair.exchange
-    graph = 'live-graph-' + exchange +"-"+ ticker
+    graph = 'live-graph-' + exchange + "-" + ticker
     cCache.append(html.Br())
     cCache.append(html.Div(id=graph))
 
 static_content_after = dcc.Interval(
     id='main-interval-component',
-    # in milliseconds for the automatic refresh; refreshes every 2 seconds
     interval=clientRefresh * 1000
 )
 app.layout = html.Div(id='main_container', children=[
@@ -488,14 +494,15 @@ def prepare_send():
     for pair in PAIRS:
         ticker = pair.ticker
         exchange = pair.exchange
-        graph = 'live-graph-' + exchange +"-"+ ticker
+        graph = 'live-graph-' + exchange + "-" + ticker
         lCache.append(html.Br())
         if (pair.Dataprepared):
             lCache.append(dcc.Graph(
                 id=graph,
                 figure=cData[exchange + ticker]
             ))
-        else: lCache.append(html.Div(id=graph))
+        else:
+            lCache.append(html.Div(id=graph))
     return lCache
 
 
@@ -534,7 +541,7 @@ def calcColor(x):
 def getStamp():
     return int(round(time.time() * 1000))
 
-
+# watchdog to catch any instances where refresh stops
 def watchdog():
     global PAIRS
     tServer = threading.Thread(target=serverThread)
@@ -620,7 +627,7 @@ def sendPrepareThread():
         overallNewData = False
         time.sleep(0.5)
         while not overallNewData:
-          time.sleep(0.5)
+            time.sleep(0.5)
 
 
 def recalcThread(pair):
@@ -628,21 +635,22 @@ def recalcThread(pair):
     refreshes = 0
     while True:
         if (pair.websocket):
-          dif = getStamp() - pair.lastStamp
-          if dif > desiredPairRefresh:
-            print(datetime.now().strftime("%H:%M:%S")+"  :   Ms Diff for " + pair.ticker + " is " + str(dif) + " Total refreshes for pair " + str(refreshes))
-            refreshes += 1
-            if not calc_data(pair):
-               count = count + 1 
+            dif = getStamp() - pair.lastStamp
+            if dif > desiredPairRefresh:
+                print(datetime.now().strftime("%H:%M:%S") + "  :   Ms Diff for " + pair.ticker + " is " + str(
+                    dif) + " Total refreshes for pair " + str(refreshes))
+                refreshes += 1
+                if not calc_data(pair):
+                    count = count + 1
+                else:
+                    count = 0
+                    pair.lastStamp = pair.usedStamp
+                if count > 5:
+                    print("Going to kill Web socket from " + pair.ticker)
+                    count = -5
+                    pair.webSocketKill = 0
             else:
-               count = 0
-               pair.lastStamp = pair.usedStamp
-            if count > 5:
-                print("Going to kill Web socket from " + pair.ticker)
-                count = -5
-                pair.webSocketKill = 0
-          else:
-            time.sleep((desiredPairRefresh-dif)/1000)
+                time.sleep((desiredPairRefresh - dif) / 1000)
 
 
 def websockThread(pair):
@@ -664,7 +672,7 @@ def preparePairThread(pair):
         if (pair.prepare):
             prepared[cbn] = prepare_data(ticker, exc)
             overallNewData = True
-            pair.Dataprepared=True
+            pair.Dataprepared = True
         while not pair.newData:
             time.sleep(0.2)
 
