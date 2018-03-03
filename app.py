@@ -6,7 +6,7 @@
 import dash
 
 from dash.dependencies import Output, Event
-from math import log10, floor
+from math import log10, floor, isnan
 from datetime import datetime
 from random import randint
 import dash_core_components as dcc
@@ -34,6 +34,7 @@ desiredPairRefresh = 30000  # (in ms) The lower it is, the better is it regardin
 js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 noDouble = True  # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"} # used for the tooltip
+SIGNIFICANT = {"USD": 2, "BTC": 4, "EUR": 2, "GBP": 2} # used for rounding
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
@@ -130,6 +131,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     # Determine what currencies we're working with to make the tool tip more dynamic.
     currency = ticker.split("-")[0]
     base_currency = ticker.split("-")[1]
+    sig_use = SIGNIFICANT.get(base_currency.upper(), 2)
     symbol = SYMBOLS.get(base_currency.upper(), "")
     try:
         first_ask = float(ask_tbl.iloc[1, 0])
@@ -217,11 +219,9 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     final_tbl = final_tbl[(final_tbl['n_unique_orders'] <= 20.0)]
     final_tbl[TBL_PRICE] = final_tbl.index
-    final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(
-        round_sig, args=(3, 0, 2))
+    final_tbl[TBL_PRICE] = final_tbl[TBL_PRICE].apply(round_sig, args=(3, 0, sig_use))
     final_tbl[TBL_VOLUME] = final_tbl[TBL_VOLUME].apply(round_sig, args=(1, 2))
-    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(
-        round_sig, args=(0,))
+    final_tbl['n_unique_orders'] = final_tbl['n_unique_orders'].apply(round_sig, args=(0,))
     final_tbl['sqrt'] = np.sqrt(final_tbl[TBL_VOLUME])
     final_tbl['total_price'] = (((final_tbl['volume'] * final_tbl['price']).round(2)).apply(lambda x: "{:,}".format(x)))
 
@@ -240,8 +240,8 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
         {TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
 
     # Rename column names for Volume Grouping
-    vol_grp_bid.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
-    vol_grp_ask.columns = ['min_Price', 'max_Price', 'count', 'volume', 'total_price']
+    vol_grp_bid.columns = ['min_Price', 'max_Price', 'count', TBL_VOLUME, 'total_price']
+    vol_grp_ask.columns = ['min_Price', 'max_Price', 'count', TBL_VOLUME, 'total_price']
 
     # Filter data by min Volume, more than 1 (intefere with bubble), less than 70 (mostly 1 or 0.5 ETH humans)
     vol_grp_bid = vol_grp_bid[
@@ -254,22 +254,22 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     vol_grp_ask['unique'] = vol_grp_ask.index.get_level_values(TBL_VOLUME)
 
     # Round the size of order
-    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3, 0, 2))
-    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_bid['unique'] = vol_grp_bid['unique'].apply(round_sig, args=(3, 0, sig_use))
+    vol_grp_ask['unique'] = vol_grp_ask['unique'].apply(round_sig, args=(3, 0, sig_use))
 
     # Round the Volume
-    vol_grp_bid[TBL_VOLUME] = vol_grp_bid[TBL_VOLUME].apply(round_sig, args=(1, 0, 2))
-    vol_grp_ask[TBL_VOLUME] = vol_grp_ask[TBL_VOLUME].apply(round_sig, args=(1, 0, 2))
+    vol_grp_bid[TBL_VOLUME] = vol_grp_bid[TBL_VOLUME].apply(round_sig, args=(1, 0, sig_use))
+    vol_grp_ask[TBL_VOLUME] = vol_grp_ask[TBL_VOLUME].apply(round_sig, args=(1, 0, sig_use))
 
     # Round the Min/ Max Price
-    vol_grp_bid['min_Price'] = vol_grp_bid['min_Price'].apply(round_sig, args=(3, 0, 2))
-    vol_grp_ask['min_Price'] = vol_grp_ask['min_Price'].apply(round_sig, args=(3, 0, 2))
-    vol_grp_bid['max_Price'] = vol_grp_bid['max_Price'].apply(round_sig, args=(3, 0, 2))
-    vol_grp_ask['max_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3, 0, 2))
+    vol_grp_bid['min_Price'] = vol_grp_bid['min_Price'].apply(round_sig, args=(3, 0, sig_use))
+    vol_grp_ask['min_Price'] = vol_grp_ask['min_Price'].apply(round_sig, args=(3, 0, sig_use))
+    vol_grp_bid['max_Price'] = vol_grp_bid['max_Price'].apply(round_sig, args=(3, 0, sig_use))
+    vol_grp_ask['max_Price'] = vol_grp_ask['max_Price'].apply(round_sig, args=(3, 0, sig_use))
 
     # Round and format the Total Price
-    vol_grp_bid['total_price'] = (vol_grp_bid['total_price'].round(2).apply(lambda x: "{:,}".format(x)))
-    vol_grp_ask['total_price'] = (vol_grp_ask['total_price'].round(2).apply(lambda x: "{:,}".format(x)))
+    vol_grp_bid['total_price'] = (vol_grp_bid['total_price'].round(sig_use).apply(lambda x: "{:,}".format(x)))
+    vol_grp_ask['total_price'] = (vol_grp_ask['total_price'].round(sig_use).apply(lambda x: "{:,}".format(x)))
 
     # Append individual text to each element
     vol_grp_bid['text'] = ("There are " + vol_grp_bid['count'].map(str) + " orders " + vol_grp_bid['unique'].map(
@@ -371,14 +371,21 @@ def prepare_data(ticker, exchange):
     data = get_data_cache(combined)
     pair.newData = False
     base_currency = ticker.split("-")[1]
+
+    #Get Minimum and Maximum
+    ladder_Bid_Min = fixNan(shape_bid[combined]['volume'].min())
+    ladder_Bid_Max = fixNan(shape_bid[combined]['volume'].max(), False)
+    ladder_Ask_Min = fixNan(shape_ask[combined]['volume'].min())
+    ladder_Ask_Max = fixNan(shape_ask[combined]['volume'].max(), False)
+    data_min = fixNan(data[TBL_VOLUME].min())
+    data_max = fixNan(data[TBL_VOLUME].max(), False)
+
     symbol = SYMBOLS.get(base_currency.upper(), "")
-    x_min = min([shape_bid[combined]['volume'].min(),
-                 shape_ask[combined]['volume'].min(), data[TBL_VOLUME].min()])
-    x_max = max([shape_bid[combined]['volume'].max(),
-                 shape_ask[combined]['volume'].max(), data[TBL_VOLUME].max()])
-    max_unique = max([shape_bid[combined]['unique'].max(),
-                      shape_ask[combined]['unique'].max()])
-    width_factor = 15 / max_unique
+    x_min = min([ladder_Bid_Min, ladder_Ask_Min, data_min])
+    x_max = max([ladder_Bid_Max, ladder_Ask_Max, data_max])
+    max_unique = max([fixNan(shape_bid[combined]['unique'].max(), False),
+                      fixNan(shape_ask[combined]['unique'].max(), False)])
+    if max_unique > 0: width_factor = 15 / max_unique
     market_price = marketPrice[combined]
     bid_trace = go.Scatter(
         x=[], y=[],
@@ -398,7 +405,7 @@ def prepare_data(ticker, exchange):
         line=dict(color='rgb(0, 0, 0)', width=2, dash='dash')
     )]
     annot_arr = [dict(
-        x=log10(x_max), y=market_price, xref='x', yref='y',
+        x=log10((x_max*0.9)), y=market_price, xref='x', yref='y',
         text=str(market_price) + symbol,
         showarrow=True, arrowhead=7, ax=20, ay=0,
         bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}
@@ -537,6 +544,14 @@ def calcColor(x):
         response = 30
     return response
 
+def fixNan(x, pMin=True):
+    if isnan(x):
+      if pMin:
+         return 99999
+      else:
+         return 0
+    else:
+      return x
 
 def getStamp():
     return int(round(time.time() * 1000))
