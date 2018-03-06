@@ -82,7 +82,7 @@ While this project has grown in popularity a great deal as of late, there is sti
 
      1. **ETH donations address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49**
      
-     2. **BTC donations address: 1M2fFerihy68gVJ5gvB7yrnwBbzEPhCbZ2**
+     2. **BTC donations address (segwit): 3KKtEfqXQUNdh8mbEBT7ZBaiqLHRBZa4Gw**
      
      3. **LTC donations address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM**
      
