@@ -484,8 +484,8 @@ def prepare_data(ticker, exchange):
                 l=75, r=75,
                 b=50, t=50,
                 pad=4),
-            paper_bgcolor='#c7c7c7',
-            plot_bgcolor='#c7c7c7',
+            paper_bgcolor='#F5F5F5',
+            plot_bgcolor='#F5F5F5',
             # adding the horizontal reference line at market price
             shapes=shape_arr,
             annotations=annot_arr,
