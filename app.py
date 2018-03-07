@@ -195,7 +195,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
     # Get Market Price
     try:
         mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
-                        bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, 2)
+                        bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, sig_use)
     except (IndexError):
         print("Empty data for " + combined + " Will wait 3s")
         time.sleep(3)
