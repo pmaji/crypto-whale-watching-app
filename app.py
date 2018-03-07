@@ -410,6 +410,16 @@ def prepare_data(ticker, exchange):
         showarrow=True, arrowhead=7, ax=20, ay=0,
         bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}
     )]
+    shape_arr.append(dict(type='rect',
+                          x0=x_min-((x_min*6)/100), y0=market_price,
+                          x1=x_max+((x_max*6)/100), y1=market_price+((market_price*6)/100),
+                          line=dict(color='rgb(255, 0, 0)', width=0.01),
+                          fillcolor='rgba(255, 0, 0, 0.04)'))
+    shape_arr.append(dict(type='rect',
+                          x0=x_min-((x_min*6)/100), y0=market_price,
+                          x1=x_max+((x_max*6)/100), y1=market_price-((market_price*6)/100),
+                          line=dict(color='rgb(0, 255, 0)', width=0.01),
+                          fillcolor='rgba(0, 255, 0, 0.04)'))
     for index, row in shape_bid[combined].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
