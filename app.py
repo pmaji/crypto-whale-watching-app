@@ -410,6 +410,7 @@ def prepare_data(ticker, exchange):
         showarrow=True, arrowhead=7, ax=20, ay=0,
         bgcolor='rgb(0,0,255)', font={'color': '#ffffff'}
     )]
+    # delete these 10 lines below if we want to move to a JS-based coloring system in the future
     shape_arr.append(dict(type='rect',
                           x0=x_min-((x_min*6)/100), y0=market_price,
                           x1=x_max+((x_max*6)/100), y1=market_price+((market_price*6)/100),
