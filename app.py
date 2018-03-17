@@ -29,7 +29,7 @@ from gdax_book import GDaxBook
 # creating variables to reduce hard-coding later on / facilitate later parameterization
 serverPort = 8050
 clientRefresh = 1
-desiredPairRefresh = 30000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
+desiredPairRefresh = 10000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
 # js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # just needed during development replace later
 js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 noDouble = True  # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
@@ -38,6 +38,8 @@ SIGNIFICANT = {"USD": 2, "BTC": 5, "EUR": 2, "GBP": 2} # used for rounding
 TBL_PRICE = 'price'
 TBL_VOLUME = 'volume'
 tables = {}
+depth_ask = {}
+depth_bid = {}
 marketPrice = {}
 prepared = {}
 shape_bid = {}
@@ -107,7 +109,7 @@ def getSendCache():
     return sendCache
 
 
-def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
+def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
     global tables, timeStamps, shape_bid, shape_ask, E_GDAX, marketPrice, timeStampsGet
     # function to get data from GDAX to be referenced in our call-back later
     # ticker a string to particular Ticker (e.g. ETH-USD)
@@ -165,32 +167,46 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     # prepare everything for depchart
     ob_step = (perc_above_first_ask - first_ask) / ob_points
-    ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
-    ob_bid = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address'])
+    ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address', 'text'])
+    ob_bid = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address', 'text'])
 
     # Following is creating a new tbl 'ob_bid' which contains the summed volume and adress-count from current price to target price
     i = 1
+    last_ask = first_ask
+    last_bid = first_ask
+    current_ask_volume = 0
+    current_bid_volume = 0
+    current_ask_adresses = 0
+    current_bid_adresses = 0
     while i < ob_points:
         # Get Borders for ask/ bid
         current_ask_border = first_ask + (i * ob_step)
         current_bid_border = first_ask - (i * ob_step)
 
         # Get Volume
-        current_ask_volume = ask_tbl.loc[
-            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), TBL_VOLUME].sum()
-        current_bid_volume = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_ask) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
+        current_ask_volume += ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= last_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), TBL_VOLUME].sum()
+        current_bid_volume += bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= last_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
 
         # Get Adresses
-        current_ask_adresses = ask_tbl.loc[
-            (ask_tbl[TBL_PRICE] >= first_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), 'address'].sum()
-        current_bid_adresses = bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= first_ask) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].sum()
+        current_ask_adresses += ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= last_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), 'address'].count()
+        current_bid_adresses += bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= last_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].count()
+
+        # Prepare Text
+        ask_text = (str(round_sig(current_ask_volume, 3, 0, sig_use)) + currency + " (from " + str(current_ask_adresses) +
+                     " orders) up to " + str(round_sig(current_ask_border, 3, 0, sig_use)) + symbol)
+        bid_text = (str(round_sig(current_bid_volume, 3, 0, sig_use)) + currency + " (from " + str(current_bid_adresses) +
+                     " orders) down to " + str(round_sig(current_bid_border, 3, 0, sig_use)) + symbol)
 
         # Save Data
-        ob_ask.loc[i - 1] = [current_ask_border, current_ask_volume, current_ask_adresses]
-        ob_bid.loc[i - 1] = [current_bid_border, current_bid_volume, current_bid_adresses]
+        ob_ask.loc[i - 1] = [current_ask_border, current_ask_volume, current_ask_adresses, ask_text]
+        ob_bid.loc[i - 1] = [current_bid_border, current_bid_volume, current_bid_adresses, bid_text]
         i += 1
+        last_ask = current_ask_border
+        last_bid = current_bid_border
 
     # Get Market Price
     try:
@@ -317,6 +333,9 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=30):
 
     marketPrice[combined] = mp  # save market price
 
+    depth_ask[combined] = ob_ask
+    depth_bid[combined] = ob_bid
+
     pair.newData = True
     pair.prepare = True  # just used for first enabling of send prepare
     return True
@@ -371,7 +390,8 @@ def prepare_data(ticker, exchange):
     data = get_data_cache(combined)
     pair.newData = False
     base_currency = ticker.split("-")[1]
-
+    ob_ask = depth_ask[combined]
+    ob_bid = depth_bid[combined]
     #Get Minimum and Maximum
     ladder_Bid_Min = fixNan(shape_bid[combined]['volume'].min())
     ladder_Bid_Max = fixNan(shape_bid[combined]['volume'].max(), False)
@@ -379,12 +399,15 @@ def prepare_data(ticker, exchange):
     ladder_Ask_Max = fixNan(shape_ask[combined]['volume'].max(), False)
     data_min = fixNan(data[TBL_VOLUME].min())
     data_max = fixNan(data[TBL_VOLUME].max(), False)
+    ob_bid_max = fixNan(ob_bid[TBL_VOLUME].max(), False)
+    ob_ask_max = fixNan(ob_ask[TBL_VOLUME].max(), False)
 
     symbol = SYMBOLS.get(base_currency.upper(), "")
     x_min = min([ladder_Bid_Min, ladder_Ask_Min, data_min])
-    x_max = max([ladder_Bid_Max, ladder_Ask_Max, data_max])
+    x_max = max([ladder_Bid_Max, ladder_Ask_Max, data_max, ob_ask_max, ob_bid_max])
     max_unique = max([fixNan(shape_bid[combined]['unique'].max(), False),
                       fixNan(shape_ask[combined]['unique'].max(), False)])
+    width_factor = 15
     if max_unique > 0: width_factor = 15 / max_unique
     market_price = marketPrice[combined]
     bid_trace = go.Scatter(
@@ -400,8 +423,8 @@ def prepare_data(ticker, exchange):
     shape_arr = [dict(
         # Line Horizontal
         type='line',
-        x0=x_min, y0=market_price,
-        x1=x_max, y1=market_price,
+        x0=x_min * 0.5, y0=market_price,
+        x1=x_max * 1.5, y1=market_price,
         line=dict(color='rgb(0, 0, 0)', width=2, dash='dash')
     )]
     annot_arr = [dict(
@@ -412,13 +435,13 @@ def prepare_data(ticker, exchange):
     )]
     # delete these 10 lines below if we want to move to a JS-based coloring system in the future
     shape_arr.append(dict(type='rect',
-                          x0=x_min-((x_min*6)/100), y0=market_price,
-                          x1=x_max+((x_max*6)/100), y1=market_price+((market_price*6)/100),
+                          x0=x_min, y0=market_price,
+                          x1=x_max, y1=market_price * 1.05,
                           line=dict(color='rgb(255, 0, 0)', width=0.01),
                           fillcolor='rgba(255, 0, 0, 0.04)'))
     shape_arr.append(dict(type='rect',
-                          x0=x_min-((x_min*6)/100), y0=market_price,
-                          x1=x_max+((x_max*6)/100), y1=market_price-((market_price*6)/100),
+                          x0=x_min, y0=market_price,
+                          x1=x_max, y1=market_price * 0.95,
                           line=dict(color='rgb(0, 255, 0)', width=0.01),
                           fillcolor='rgba(0, 255, 0, 0.04)'))
     for index, row in shape_bid[combined].iterrows():
@@ -479,7 +502,25 @@ def prepare_data(ticker, exchange):
                     'line': {'width': 0.5, 'color': 'white'},
                     'color': data['color']
                 },
-            ), ask_trace, bid_trace
+            ), ask_trace, bid_trace, go.Scatter(
+                x=ob_ask[TBL_VOLUME],
+                y=ob_ask[TBL_PRICE],
+                mode='lines',
+                opacity=0.5,
+                hoverinfo='text',
+                text=ob_ask['text'],
+                line = dict(color = ('rgb(255, 0, 0)'),
+                        width = 2)
+            ),go.Scatter(
+                x=ob_bid[TBL_VOLUME],
+                y=ob_bid[TBL_PRICE],
+                mode='lines',
+                opacity=0.5,
+                hoverinfo='text',
+                text=ob_bid['text'],
+                line = dict(color = ('rgb(0, 255, 0)'),
+                        width = 2)
+            )
         ],
         'layout': go.Layout(
             # title automatically updates with refreshed market price
@@ -487,8 +528,8 @@ def prepare_data(ticker, exchange):
                                                                                 str(
                                                                                     marketPrice[combined]),
                                                                                 timeStamps[combined])),
-            xaxis=dict(title='Order Size', type='log', autorange=True),
-            yaxis={'title': '{} Price'.format(ticker)},
+            xaxis=dict(title='Order Size', type='log', autotick=True,range=[log10(x_min*0.95), log10(x_max*1.03)]),
+            yaxis={'title': '{} Price'.format(ticker),'range':[market_price*0.94, market_price*1.06]},
             hovermode='closest',
             # now code to ensure the sizing is right
             margin=go.Margin(
