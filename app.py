@@ -4,7 +4,6 @@
 
 # dash-related libraries
 import dash
-
 from dash.dependencies import Output, Event
 from math import log10, floor, isnan
 from datetime import datetime
