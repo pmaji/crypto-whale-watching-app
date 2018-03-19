@@ -4,6 +4,8 @@ Welcome! This is a Python-based Dash app meant to track whale activity in buy / 
 
 If you want to use a hosted version of the app, **[check out this link here](http://whales.cracklord.com/)** which has been graciously hosted by a member of the Ethereum community while we raise money via donations to migrate to AWS. If for any reason the page does not load properly, feel free to let us know via an issue, but more than likely it is because we are updating to the newest version of the codebase or performing maintenance.
 
+Also, as we are in the midst of attempting to migrate hosts, the hosted version of the app is several large improvements **behind** the present code base; as such, running the app locally will allow you access to the neweset features. These new features include (among others) a newly integrated depth chart (shown below), as well as a side-menu that allows selective hiding / showing of various pairs of interest. 
+
 
 ## What's the point of this app?
 
