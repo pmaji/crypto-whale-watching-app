@@ -73,10 +73,6 @@ Once its finished type:
 
 Then open up your broswer and type in the set of numbers that pop up in terminal, which should look similar to "127.0.0.1:8050".
 
-## Contribution Rules
-
-All are welcome to contribute issues / pull-requests to the codebase. All I ask is that you include a detailed description of your contribution, that your code is thoroughly-commented, and that you test your contribution locally with the most recent version of the Master branch integrated prior to submitting the PR. We also have a Telegram chat for major contributors so if you want to be added to that first submit a contribution and then message me on Telegram (my public ID is the same as my GitHub ID).
-
 ## Support Needed
 
 While this project has grown in popularity a great deal as of late, there is still much to be done. Below is a summary of the main needs that we have presently with which anyone can assist (this is a community project after all!):
@@ -101,7 +97,9 @@ While this project has grown in popularity a great deal as of late, there is sti
      
      2. If you want new features integrated or have any other ideas, open a new issue and I'll address them ASAP.
 
+## Contribution Rules
 
+All are welcome to contribute issues / pull-requests to the codebase. All I ask is that you include a detailed description of your contribution, that your code is thoroughly-commented, and that you test your contribution locally with the most recent version of the Master branch integrated prior to submitting the PR. We also have a Telegram chat for major contributors so if you want to be added to that first submit a contribution and then message me on Telegram (my public ID is the same as my GitHub ID).
 
 
 
