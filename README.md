@@ -55,7 +55,7 @@ In the image above we are looking at the same chart for ETH/USD, but now zoomed 
 
 We cannot be as certain that ladder price-point whales are, in fact, individual whales, as it could just be a few people who place similar orders of identical size at different psychological modal points, but in most cases this is unlikely, and we leave it up to the user to make the ultimate determination as to whether or not they believe a particular order or set of orders to be a whale or not. That said, we do recognize that the ladder price-point whale methodology could perhaps be improved with variable controls, and we are actively looking into this along with other improvements. Our app only serves to provide the information, and to ascribe some semblance of a probability to the likelihood that an observation is a whale or not. 
 
-## A Few More Technical Details
+## How-To Use / Guide (and a few more technical details)
 
 The present version tracks all major pairings (ETH/USD; ETH/BTC; BTC/USD; LTC/USD) but I can add more upon request. It is set to update every 5 seconds (to optimize load-time) but this can be changed easily in the code if you want to make the refreshes faster / slower. There are also buttons that allow the user to pause the automatic refresh ("Freeze all" / "Unfreeze all"), and hide any of the currency pairings that they do not wish to see displayed. The refresh-pausing functionality allows the user to preserve any zoom or limitation that they have selected via the Plotly viz. 
 
