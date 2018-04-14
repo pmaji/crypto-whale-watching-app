@@ -77,25 +77,32 @@ Then open up your browser and type in the set of numbers that pop up in terminal
 
 While this project has grown in popularity a great deal as of late, there is still much to be done. Below is a summary of the main needs that we have presently with which anyone can assist (this is a community project after all!):
 
-1. Donations needed for host-fees and development work (presently raising money for AWS migration; ETH preferred):
+1. Technical assistance and ideation:
 
-     1. **ETH donations address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49**
+     1. If you have coding experience, check out the code and issues tab and see if you can help with anything or propose new additions.
      
-     2. **BTC donations address (segwit): 3KKtEfqXQUNdh8mbEBT7ZBaiqLHRBZa4Gw**
-     
-     3. **LTC donations address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM**
-     
+     2. If you want new features integrated or have any other ideas, open a new issue and I'll address it ASAP.
+
 2. Overall promotion:
 
      1. Keep sharing with you friends / fellow traders / coders so that we can get more constructive feedback.
      
-     2. Consider starring us on GitHub as a means of sharing this project with the broader community.
-     
-3. Technical assistance and ideation:
+     2. **Consider starring us on GitHub** as a means of sharing this project with the broader community.
 
-     1. If you have coding experience, check out the code and issues tab and see if you can help with anything or propose new additions.
+3. Donations appreciated for hosting-fees and development work (addresses and QR codes below):
+
+     1. **ETH donations address: 0xA40094D607063a156e230174e01f5b4Fd1101549**
      
-     2. If you want new features integrated or have any other ideas, open a new issue and I'll address them ASAP.
+     ![ETH donations address](https://raw.githubusercontent.com/pmaji/crypto-asset-comparison-tool/master/screenshots/eth_address.png)
+     
+     2. **BTC donations address (segwit): 3NWsx8s1NeDDc3AF4VtRwBKafdG7jyEnQL**
+     
+     ![ETH donations address](https://raw.githubusercontent.com/pmaji/crypto-asset-comparison-tool/master/screenshots/btc_address.png)
+     
+     3. **LTC donations address: MRqXizDN7u2t5KMxuZmssE4N2P4E21Z9MB**
+     
+     ![ETH donations address](https://raw.githubusercontent.com/pmaji/crypto-asset-comparison-tool/master/screenshots/ltc_address.png)
+     
 
 ## Contribution Rules
 
