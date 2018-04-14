@@ -4,7 +4,7 @@ Welcome! This is a Python-based Dash app meant to track whale activity in buy / 
 
 If you want to use a hosted version of the app, **[check out this link here](http://whales.cracklord.com/)** which has been graciously hosted by a member of the Ethereum community while we raise money via donations to migrate to AWS. If for any reason the page does not load properly, feel free to let us know via an issue, but more than likely it is because we are updating to the newest version of the codebase or performing maintenance.
 
-Also, as we are in the midst of attempting to migrate hosts, the hosted version of the app is several large improvements **behind** the present code base; as such, running the app locally will allow you access to the neweset features. These new features include (among others) a newly integrated depth chart (shown in the screenshot below), as well as a side-menu that allows selective hiding / showing of various pairs of interest. 
+Also, as we are in the midst of attempting to migrate hosts, the hosted version of the app is several large improvements **behind** the present code base; as such, running the app locally will allow you access to the newest features. These new features include (among others) a newly integrated depth chart (shown in the screenshot below), as well as a side-menu that allows selective hiding / showing of various pairs of interest. 
 
 <img src="https://raw.githubusercontent.com/pmaji/eth_python_tracker/master/screenshots/improved_new_plots.JPG" width="700" height="300">
 
@@ -25,21 +25,21 @@ This is perhaps the most important question when it comes to the purpose of this
 * Single Price-Point Whales:
      * Place one large order at a single price-point 
      * Example: 500 ETH for sale at $1000 via 1 unique order
-     * Represented via a bubble in the vizualization.
-     * Tooltip includes order pricepoint, volume, and number of unique orders
+     * Represented via a bubble in the visualization.
+     * Tooltip includes order price-point, volume, and number of unique orders
 * Ladder Price-Point Whales:
      * Place many medium-sized orders for identical volume increasing in price
      * Example: 500 total ETH for sale starting at $900 and spanning until $1000 via 10 unique 50-ETH orders
-     * Represented via a linebar spanning the range of the ladder
+     * Represented via a line bar  spanning the range of the ladder
      * Tooltip includes number and volume of orders, price-range of ladder, and total volume
 
 While these two may seem different, their market impacts are often comparable. I think a real world example of this helps illustrate this point:
 
 > Imagine that you are looking to understand if there is any whale activity at your local coffee shop (I know this is silly but I promise it is a good example; stay with me here). You could sit near the ordering area and write down each individual order. If someone comes along and orders 100 lattes, that would get your attention--you have spotted a whale! What if, however, someone was ordering 5 lattes, and then getting in the back of the line again, and ordering another 5 lattes, repeating this until they had purchased a total of 100 lattes? Both of these individuals had a whale-like impact on market movement, but if all you care about is the size of each individual order, you will miss out on the sneaky whales that may be splitting their orders across a ladder of price-points.
 
-> Given that GDAX's API doesn't display ETH addresses (only unique order IDs), we cannot say with 100% certainty that what looks like a "ladder price-point whale" is in fact a unitary actor. We have to make some assumptions. To continue the coffee shop metaphor, we aren't able to actually look at the people in line for coffee; instead, we have a blindfold on and are jotting down what we hear the barista say. We hear "1 order for 5 lattes" once and write it down, but if we hear "1 order for 5 lattes" 100 different times in close succession, then we can make the safe assumption that we are dealing with a whale, as this is analogous to seeing 100 orders for 10 ETH stacked in a ladder of pricepoints in close succesion on GDAX. 
+> Given that GDAX's API doesn't display ETH addresses (only unique order IDs), we cannot say with 100% certainty that what looks like a "ladder price-point whale" is in fact a unitary actor. We have to make some assumptions. To continue the coffee shop metaphor, we aren't able to actually look at the people in line for coffee; instead, we have a blindfold on and are jotting down what we hear the barista say. We hear "1 order for 5 lattes" once and write it down, but if we hear "1 order for 5 lattes" 100 different times in close succession, then we can make the safe assumption that we are dealing with a whale, as this is analogous to seeing 100 orders for 10 ETH stacked in a ladder of price-points in close succession on GDAX. 
 
-As can be seen from the UI screenshot below, for each currency pairing the user can easily examine the most obvious whales hiding amongst the walls. The algorithm used displays only those orders that make up >= 1% of the volume of the portion of the order book shown in the visualization (which is presently +/-5% from present market price). This methodology makes our analysis robust both in times of price stability--when there is both resistance and support similar in magnitude--as well as during times of large price fluctuation--when there may be very little support or very little resistance. Thanks to the creative coloring algorithm behind the visualization, the brightest colors are those most likely to be whales. The colors become progressively darker as the number of distinct orders at a pricepoint increases, allowing for easy visual identification of whales in the market.
+As can be seen from the UI screenshot below, for each currency pairing the user can easily examine the most obvious whales hiding amongst the walls. The algorithm used displays only those orders that make up >= 1% of the volume of the portion of the order book shown in the visualization (which is presently +/-5% from present market price). This methodology makes our analysis robust both in times of price stability--when there is both resistance and support similar in magnitude--as well as during times of large price fluctuation--when there may be very little support or very little resistance. Thanks to the creative coloring algorithm behind the visualization, the brightest colors are those most likely to be whales. The colors become progressively darker as the number of distinct orders at a price-point increases, allowing for easy visual identification of whales in the market.
 
 ![Main UI](https://raw.githubusercontent.com/pmaji/crypto-whale-watching-app/master/screenshots/eth_btc_main_view.JPG)
 
@@ -47,7 +47,7 @@ In addition to the main views which provide at-a-glance information about the la
 
 ![Single-Price-Point Whale](https://raw.githubusercontent.com/pmaji/crypto-whale-watching-app/master/screenshots/single_price_point_whale_tooltip.JPG)
 
-In the image above we are looking at a zoom-in on the chart of BTC/USD. The bubble that we have hovered over near the top towards the center of the view is a slightly dark red bubble (as opposed to the brightest red) because there are 2 orders at that exact price pricepoint; hence, we cannot be 100% confident that it is one whale acting unilaterally. That said, those 2 orders alone constitute almost $1,000,000.00 in sell-side pressure, so they are important to call out, and thus our methodology captures them. We can see additional useful information via the tooltip--namely, that these 2 sell orders together constitute 113.38 BTC in sell-order volume, with each of those orders being placed at a pricepoint of  $8,352.00. Lastly, we see the count of unique orders at this price point (2), along with the sum total value of those orders ($946,949.76).
+In the image above we are looking at a zoom-in on the chart of BTC/USD. The bubble that we have hovered over near the top towards the center of the view is a slightly dark red bubble (as opposed to the brightest red) because there are 2 orders at that exact price price-point; hence, we cannot be 100% confident that it is one whale acting unilaterally. That said, those 2 orders alone constitute almost $1,000,000.00 in sell-side pressure, so they are important to call out, and thus our methodology captures them. We can see additional useful information via the tooltip--namely, that these 2 sell orders together constitute 113.38 BTC in sell-order volume, with each of those orders being placed at a price-point of  $8,352.00. Lastly, we see the count of unique orders at this price point (2), along with the sum total value of those orders ($946,949.76).
 
 ![Ladder-Price-Point-Whale](https://raw.githubusercontent.com/pmaji/crypto-whale-watching-app/master/screenshots/ladder_price_point_whale_tooltip.JPG)
 
@@ -71,7 +71,7 @@ Once its finished type:
 
 > python app.py
 
-Then open up your broswer and type in the set of numbers that pop up in terminal, which should look similar to "127.0.0.1:8050".
+Then open up your browser and type in the set of numbers that pop up in terminal, which should look similar to "127.0.0.1:8050".
 
 ## Support Needed
 
