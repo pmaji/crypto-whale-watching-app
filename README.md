@@ -6,7 +6,7 @@ If you want to use a hosted version of the app, **[check out this link here](htt
 
 Also, as we are in the midst of attempting to migrate hosts, the hosted version of the app is several large improvements **behind** the present code base; as such, running the app locally will allow you access to the newest features. These new features include (among others) a newly integrated depth chart (shown in the screenshot below), as well as a side-menu that allows selective hiding / showing of various pairs of interest. 
 
-<img src="https://raw.githubusercontent.com/pmaji/eth_python_tracker/master/screenshots/improved_new_plots.JPG" width="700" height="300">
+![First UI View](https://raw.githubusercontent.com/pmaji/crypto-whale-watching-app/master/screenshots/improved_new_plots.JPG)
 
 ## What's the point of this app?
 
