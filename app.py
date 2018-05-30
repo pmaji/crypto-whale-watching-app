@@ -63,17 +63,16 @@ class Exchange:
 
 class Pair:
     # Class to store a pair with its respective threads
-    ob_Inst = {}
-    threadWebsocket = {}
-    threadPrepare = {}
-    threadRecalc = {}
-    Dataprepared = False
-    webSocketKill = 1
-    lastStamp = 0
-    usedStamp = 0
-    newData = False
-
     def __init__(self, pExchange, pTicker):
+        self.ob_Inst = {}
+        self.threadWebsocket = {}
+        self.threadPrepare = {}
+        self.threadRecalc = {}
+        self.Dataprepared = False
+        self.webSocketKill = 1
+        self.lastStamp = 0
+        self.usedStamp = 0
+        self.newData = False
         self.name = pExchange + " " + pTicker
         self.ticker = pTicker
         self.lastUpdate = "0"
