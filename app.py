@@ -346,7 +346,7 @@ app.scripts.append_script({"external_url": js_extern})
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
-    html.H3('Donations greatly appreciated; will go towards hosting / development'),
+    html.H3('Donations needed for hosting / development:'),
     html.P(['ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49', html.Br(),
             'BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo', html.Br(),
             'LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'
