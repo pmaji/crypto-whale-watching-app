@@ -23,7 +23,7 @@ pandas==0.22.0
 plotly==2.2.3
 python-dateutil==2.6.1
 pytz==2017.3
-requests==2.13.0
+requests>=2.20.0
 six==1.10.0
 traitlets==4.3.2
 urllib3==1.22
