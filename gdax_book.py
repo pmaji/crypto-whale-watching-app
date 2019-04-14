@@ -9,7 +9,7 @@ from gdax.websocket_client import WebsocketClient
 class GDaxBook(WebsocketClient):
     def __init__(self, product_id='BTC-USD'):
         print("Initializing order Book websocket for " + product_id)
-        self.product=product_id
+        self.product = product_id
         super(GDaxBook, self).__init__(products=[self.product])
         super(GDaxBook, self).start()
         self._asks = RBTree()
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     import time
     wsClient = WebsocketClient()
     wsClient.start()
-    wsClient.products=["ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"]
+    wsClient.products = ["ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"]
     order_book = OrderBook("ETH-USD")
     order_book.start()
     time.sleep(20)
