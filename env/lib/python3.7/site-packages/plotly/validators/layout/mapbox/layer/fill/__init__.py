@@ -1,1 +1,0 @@
-from ._outlinecolor import OutlinecolorValidator
