@@ -7,6 +7,9 @@ from datetime import datetime
 from random import randint
 import dash_core_components as dcc
 import dash_html_components as html
+import colorama
+import sys
+import getopt
 
 # non-dash-related libraries
 import plotly.graph_objs as go
@@ -22,7 +25,11 @@ from queue import Queue
 # custom library
 from gdax_book import GDaxBook
 
+colorama.init()
 # creating variables to reduce hard-coding later on / facilitate later parameterization
+debugLevel = 3
+debugLevels = ["Special Debug","Debug","Info","Warnings","Errors"]
+debugColors = ['\033[34m','\033[90m','\033[32m','\033[33;1m','\033[31m']
 serverPort = 8050
 clientRefresh = 1
 desiredPairRefresh = 10000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
@@ -80,10 +87,12 @@ class Pair:
 
 
 PAIRS = []  # Array containing all pairs
-E_GDAX = Exchange("GDAX", ["ETH-USD", "ETH-EUR", "ETH-BTC",
-                           "BTC-USD", "BTC-EUR", "BTC-GBP",
-                           "LTC-USD", "LTC-EUR", "LTC-BTC",
-                           "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
+E_GDAX = Exchange("GDAX", [
+                           # "ETH-USD", "ETH-EUR", "ETH-BTC",
+                           # "BTC-USD", "BTC-EUR", "BTC-GBP",
+                           # "LTC-USD", "LTC-EUR", "LTC-BTC",
+                           # "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
+                           "BCH-USD", "BCH-BTC"], 0)
 for ticker in E_GDAX.ticker:
     cObj = Pair(E_GDAX.name, ticker)
     PAIRS.append(cObj)
@@ -133,7 +142,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
     try:
         first_ask = float(ask_tbl.iloc[1, 0])
     except (IndexError):
-        print("Empty data for " + combined + " Will wait 3s")
+        log(4,"Empty data for " + combined + " Will wait 3s")
         time.sleep(3)
         return False
 
@@ -208,7 +217,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
         mp = round_sig((ask_tbl[TBL_PRICE].iloc[0] +
                         bid_tbl[TBL_PRICE].iloc[0]) / 2.0, 3, 0, sig_use)
     except (IndexError):
-        print("Empty data for " + combined + " Will wait 3s")
+        log(4,"Empty data for " + combined + " Will wait 3s")
         time.sleep(3)
         return False
     bid_tbl = bid_tbl.iloc[::-1]  # flip the bid table so that the merged full_tbl is in logical order
@@ -610,7 +619,7 @@ def watchdog():
     tServer.daemon = False
     tServer.start()
     time.sleep(3)  # get Server start
-    print("Server should be running now")
+    log(2,"Server should be running now")
     tPreparer = threading.Thread(target=sendPrepareThread)
     tPreparer.daemon = False
     tPreparer.start()
@@ -620,26 +629,26 @@ def watchdog():
         pair.threadWebsocket.daemon = False
         pair.threadWebsocket.start()
         time.sleep(3)
-    print("Web sockets up")
+    log(2,"Web sockets up")
     for pair in PAIRS:
         pair.threadRecalc = threading.Thread(target=recalcThread, args=(pair,))
         pair.threadRecalc.daemon = False
         pair.threadRecalc.start()
         time.sleep(2.5)
-    print("ReCalc up")
+    log(2,"ReCalc up")
     for pair in PAIRS:
         pair.threadPrepare = threading.Thread(
             target=preparePairThread, args=(pair,))
         pair.threadPrepare.daemon = False
         pair.threadPrepare.start()
-    print("Everything should be running now, starting Watchdog, to control the herd")
+    log(2,"Everything should be running now, starting Watchdog, to control the herd")
     while True:
         time.sleep(2)
         alive = True
         for pair in PAIRS:
             if not pair.threadRecalc.isAlive():
                 alive = False
-                print("Restarting pair Recalc " +
+                log(2,"Restarting pair Recalc " +
                       pair.exchange + " " + pair.ticker)
                 pair.threadRecalc = threading.Thread(
                     target=recalcThread, args=(pair,))
@@ -647,7 +656,7 @@ def watchdog():
                 pair.threadRecalc.start()
             if not pair.threadWebsocket.isAlive():
                 alive = False
-                print("Restarting pair Web socket " +
+                log(2,"Restarting pair Web socket " +
                       pair.exchange + " " + pair.ticker)
                 pair.webSocketKill = 1
                 pair.threadWebsocket = threading.Thread(
@@ -656,7 +665,7 @@ def watchdog():
                 pair.threadWebsocket.start()
             if not pair.threadPrepare.isAlive():
                 alive = False
-                print("Restarting pair Prepare worker " +
+                log(2,"Restarting pair Prepare worker " +
                       pair.exchange + " " + pair.ticker)
                 pair.threadPrepare = threading.Thread(
                     target=preparePairThread, args=(pair,))
@@ -664,18 +673,18 @@ def watchdog():
                 pair.threadPrepare.start()
         if not tServer.isAlive():
             alive = False
-            print("Watchdog detected dead Server, restarting")
+            log(3,"Watchdog detected dead Server, restarting")
             tServer = threading.Thread(target=serverThread)
             tServer.daemon = False
             tServer.start()
         if not tPreparer.isAlive():
             alive = False
-            print("Watchdog detected dead Preparer, restarting")
+            log(3,"Watchdog detected dead Preparer, restarting")
             tPreparer = threading.Thread(target=sendPrepareThread)
             tPreparer.daemon = False
             tPreparer.start()
         if not alive:
-            print("Watchdog got some bad sheeps back to group")
+            log(3,"Watchdog got some bad sheeps back to group")
 
 
 def serverThread():
@@ -699,7 +708,7 @@ def recalcThread(pair):
         if (pair.websocket):
             dif = getStamp() - pair.lastStamp
             if dif > desiredPairRefresh:
-                print(datetime.now().strftime("%H:%M:%S") + "  :   Ms Diff for " + pair.ticker + " is " + str(
+                log(1,"Ms Diff for " + pair.ticker + " is " + str(
                     dif) + " Total refreshes for pair " + str(refreshes))
                 refreshes += 1
                 if not calc_data(pair):
@@ -708,7 +717,7 @@ def recalcThread(pair):
                     count = 0
                     pair.lastStamp = pair.usedStamp
                 if count > 5:
-                    print("Going to kill Web socket from " + pair.ticker)
+                    log(3,"Going to kill Web socket from " + pair.ticker)
                     count = -5
                     pair.webSocketKill = 0
             else:
@@ -738,7 +747,43 @@ def preparePairThread(pair):
         while not pair.newData:
             time.sleep(0.2)
 
+def handleArgs(argv):
+    global serverPort, debugLevel, desiredPairRefresh
+    try:
+        opts, args = getopt.getopt(
+            argv, "hp:d:", ["port=","debug=","pRefresh="])
+    except getopt.GetoptError:
+        print('app.py -h')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print('app.py --port 8050 --pRefresh')
+            print('--pRefresh indicates the refresh Rate in ms')
+            sys.exit()
+        elif opt in ("-p", "--port"):
+            serverPort = int(arg)
+        elif opt in ("-d", "--debug"):
+            debugLevel = int(arg)
+        elif opt in ("--pRefresh"):
+            desiredPairRefresh = int(arg)
+
+    log(4,"Legend: This is an error message")
+    log(3,"Legend: This is a warning message")
+    log(2,"Legend: This is an info message")
+    log(1,"Legend: This is a debug message")
+    log(0,"Legend: This is a deep debug message")
+    log(1,'Web Interface Port is ' + str(serverPort))
+    log(1,'Debug Level is ' + str(debugLevel))
+
+def log(pLevel, pMessage):
+    if pLevel >= debugLevel:
+        text = (str(datetime.now()) + " [" +
+            debugLevels[pLevel] +
+            "]: " + str(pMessage))
+        open("log.txt","a").write(text + "\n")
+        print(debugColors[pLevel] + text + '\033[0m')
 
 if __name__ == '__main__':
     # Initial Load of Data
+    handleArgs(sys.argv[1:])
     watchdog()
