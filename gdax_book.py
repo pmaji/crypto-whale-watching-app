@@ -1,10 +1,9 @@
-
 from operator import itemgetter
 from bintrees import RBTree
 from decimal import Decimal
 import pickle
-from gdax.public_client import PublicClient
-from gdax.websocket_client import WebsocketClient
+from cbpro.public_client import PublicClient
+from cbpro.websocket_client import WebsocketClient
 
 class GDaxBook(WebsocketClient):
     def __init__(self, product_id='BTC-USD'):
@@ -226,7 +225,7 @@ if __name__ == '__main__':
     wsClient = WebsocketClient()
     wsClient.start()
     wsClient.products = ["ETH-USD", "ETH-BTC", "BTC-USD", "LTC-USD", "LTC-BTC", "ETH-EUR", "BTC-EUR", "LTC-EUR"]
-    order_book = OrderBook("ETH-USD")
+    order_book = cbpro.OrderBook("ETH-USD")
     order_book.start()
     time.sleep(20)
     order_book.close()
