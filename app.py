@@ -88,11 +88,10 @@ class Pair:
 
 PAIRS = []  # Array containing all pairs
 E_GDAX = Exchange("GDAX", [
-                           # "ETH-USD", "ETH-EUR", "ETH-BTC",
-                           # "BTC-USD", "BTC-EUR", "BTC-GBP",
-                           # "LTC-USD", "LTC-EUR", "LTC-BTC",
-                           # "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
-                           "BCH-USD", "BCH-BTC"], 0)
+                           "ETH-USD", "ETH-EUR", "ETH-BTC",
+                           "BTC-USD", "BTC-EUR", "BTC-GBP",
+                           "LTC-USD", "LTC-EUR", "LTC-BTC",
+                           "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
 for ticker in E_GDAX.ticker:
     cObj = Pair(E_GDAX.name, ticker)
     PAIRS.append(cObj)
