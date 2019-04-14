@@ -26,14 +26,13 @@ from queue import Queue
 from gdax_book import GDaxBook
 
 colorama.init()
-# creating variables to reduce hard-coding later on / facilitate later parameterization
+# creating variables to facilitate later parameterization
 debugLevel = 3
 debugLevels = ["Special Debug","Debug","Info","Warnings","Errors"]
 debugColors = ['\033[34m','\033[90m','\033[32m','\033[33;1m','\033[31m']
 serverPort = 8050
 clientRefresh = 1
 desiredPairRefresh = 10000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
-# js_extern = "https://rawgit.com/theimo1221/eth_python_tracker/patch-7/main.js" # just needed during development replace later
 js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 noDouble = True  # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"} # used for the tooltip
@@ -351,23 +350,19 @@ app.scripts.append_script({"external_url": js_extern})
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
-    html.H3('Donations needed for hosting / development:'),
-    html.P(['ETH Donations Address: 0xDB63E1e60e644cE55563fB62f9F2Fc97B751bc49', html.Br(),
-            'BTC Donations Address: 1BtEBzRxymw6NvtCfoGheLuh2E2iS5mPuo', html.Br(),
-            'LTC Donations Address: LWaLxgaBveWATqwsYpYfoAqiG2tb2o5awM'
-            ]),
-    html.H3(html.A('GitHub Link (Click to support us by giving a star; request new features via "issues" tab)',
+    html.H3(html.A('GitHub Link Here (Consider supporting us by giving a star; request new features via "issues" tab)',
                    href="https://github.com/pmaji/eth_python_tracker")),
-    html.H3(
-        'Legend: Bright colored mark = likely WHALE '
-        '(high volume price point via 1 unique order, or many identical medium-sized orders in a ladder). '
-        'Bubbles get darker as the number of unique orders increases. '
-        'Hover over bubbles for more info. Volume (x-axis) on log-scale. '
-        'Click "Freeze all" button to halt refresh, '
-        'and hide/show buttons to pick which currency pairs to display. '
-        'Only displays orders greater than or equal to 1% of the volume of the portion of the order book displayed. '
-        'If annotations overlap or bubbles cluster click "Freeze all" and then zoom in on the area of interest.'
-        ' See GitHub for further details.')
+    html.P([
+        "Legend: Bright colored mark = likely WHALE ",
+        "(high volume price point via 1 unique order, or many identical medium-sized orders in a ladder). ", html.Br(),
+        "Bubbles get darker as the number of unique orders increases. " , html.Br(),
+        "Hover over bubbles for more info. Note: volume (x-axis) on log-scale. " , html.Br(),
+        "Click 'Freeze all' button to halt refresh, "
+        "and hide/show buttons to pick which currency pairs to display. " , html.Br(),
+        "Only displays orders >= 1% of the volume of the portion of the order book displayed. ", html.Br(),
+        "If annotations overlap or bubbles cluster, click 'Freeze all' and then zoom in on the area of interest.", html.Br(),
+        "See GitHub link above for further details."
+        ])
 ]
 cCache = []
 for pair in PAIRS:
