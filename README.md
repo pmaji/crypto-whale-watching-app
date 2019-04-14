@@ -63,7 +63,7 @@ The size of each observation is determined algorithmically using a transformatio
 
 Note: all of these limitations--i.e. the volume minimum, the order book limitations, etc., are parameterized within the app.py code and thus can be easily changed if so desired.
 
-Anyone interested with Python 3.6 installed can download the app.py or clone the repo and run the app locally, just check to be sure you have the few required modules installed (I recommend managing them within a virtual environment created using conda or whatever other package manager you prefer). Once you have Python 3.6 installed, open up a Terminal and type:
+Anyone interested with Python 3.6 installed can download the app.py or clone the repo and run the app locally, just check to be sure you have the few required modules installed (I recommend [managing them within a virtual environment](https://packaging.python.org/guides/installing-using-pip-and-virtualenv/) created using conda or whatever other package manager you prefer). Once you have Python 3.6 installed, open up a Terminal and type:
 
 > pip install -r /path/to/requirements.txt
 
