@@ -2,9 +2,11 @@
 
 Welcome! This is a Python-based Dash app meant to track whale activity in buy / sell walls on crypto-currency exchanges (presently just operational for GDAX, but more exchanges to come). This document aims to explain the purpose, functionality, and future of this project. Please do share this with your fellow coders / traders / crypto-aficionados, and contribute to the future of this project by calling out issues, requesting new features, and submitting pull requests to improve the app.
 
-While this was previously hosted by a member of the community, the scale and computational intensity of the application have made it too expensive to host long-term in a sustainable manner. If anyone is interested in working with us on web-hosting this application, please reach out via an issue here on GitHub, or feel free to reach out directly [to me via here via Twitter](https://twitter.com/ByPaulJ).
+The newest version of this app is quite computationally intense, and as such, it is recommended that the new version be run locally pursuant to the instructions below. If this version gives you trouble at all, a less computationally-intense earlier version of the app can be found [at this commit version here](https://github.com/pmaji/crypto-whale-watching-app/commit/2b567987cb338802bc28702c96c22bde8d48d0c0), and thanks to a generous member of the community, is [hosted online here](https://whales.cracklord.com/). 
 
-Even absent a web-hosted version of the app, it is quite easy to use. Scroll down to the How-To / User Guide section to learn more about how to run the app yourself. The most recent updates to the app include new features like an improved depth chart (shown in the screenshot below), as well as a side-menu that allows selective hiding / showing of various pairs of interest.
+If anyone has questions about the app, feel free to reach out to me [via Twitter here](https://twitter.com/ByPaulJ). 
+
+Scroll down to the How-To / User Guide section to learn more about how to run the app yourself. The most recent updates to the app include new features like an improved depth chart (shown in the screenshot below), as well as a side-menu that allows selective hiding / showing of various pairs of interest.
 
 ![First UI View](https://raw.githubusercontent.com/pmaji/crypto-whale-watching-app/master/screenshots/improved_new_plots.JPG)
 
