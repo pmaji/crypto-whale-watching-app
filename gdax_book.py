@@ -9,7 +9,7 @@ class GDaxBook(WebsocketClient):
     def __init__(self, product_id='BTC-USD'):
         print("Initializing order Book websocket for " + product_id)
         self.product = product_id
-        super(GDaxBook, self).__init__(products=[self.product])
+        super(GDaxBook, self).__init__(url="wss://ws-feed.pro.coinbase.com", products=[self.product], channels=["ticker"])
         super(GDaxBook, self).start()
         self._asks = RBTree()
         self._bids = RBTree()
@@ -18,7 +18,7 @@ class GDaxBook(WebsocketClient):
         self._current_ticker = None
 
     def on_message(self, message):
-        sequence = message['sequence']
+        sequence = message.get('sequence', -1)
         if self._sequence == -1:
             self._asks = RBTree()
             self._bids = RBTree()
