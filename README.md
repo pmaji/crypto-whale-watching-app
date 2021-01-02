@@ -4,7 +4,7 @@ Welcome! This is a Python-based Dash app meant to track whale activity in buy / 
 
 The newest version of this app is quite computationally intense, and as such, it is recommended that the new version be run locally pursuant to the instructions below. If this version gives you trouble at all, a less computationally-intense earlier version of the app can be found [at this commit version here](https://github.com/pmaji/crypto-whale-watching-app/commit/2b567987cb338802bc28702c96c22bde8d48d0c0), and thanks to a generous member of the community, is [hosted online here](https://whales.cracklord.com/). 
 
-If anyone has questions about the app, feel free to reach out to me [via Twitter here](https://twitter.com/ByPaulJ). 
+If anyone has questions about the app, feel free to reach out to open an issue. 
 
 Scroll down to the How-To / User Guide section to learn more about how to run the app yourself. The most recent updates to the app include new features like an improved depth chart (shown in the screenshot below), as well as a side-menu that allows selective hiding / showing of various pairs of interest.
 
@@ -93,4 +93,4 @@ Below is a summary of the main needs that we have presently with which anyone ca
 
 ## Contribution Rules
 
-All are welcome to contribute issues / pull-requests to the codebase. All I ask is that you include a detailed description of your contribution, that your code is thoroughly-commented, and that you test your contribution locally with the most recent version of the Master branch integrated prior to submitting the PR. We also have a Telegram chat for major contributors, so if you want to be added to that, first submit a contribution and then [reach out to me via Twitter](https://twitter.com/ByPaulJ).
+All are welcome to contribute issues / pull-requests to the codebase. All I ask is that you include a detailed description of your contribution, that your code is thoroughly-commented, and that you test your contribution locally with the most recent version of the Master branch integrated prior to submitting the PR.
