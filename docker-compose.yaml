@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+    web:
+        tty: true
+        image: netmonster/crypto-whale-watching-app:latest
+        ports:
+            - "8050:8050"
