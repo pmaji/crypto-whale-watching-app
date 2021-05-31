@@ -59,6 +59,26 @@ We cannot be as certain that ladder price-point whales are, in fact, individual 
 
 ## How-To / User Guide (and a few more technical details)
 
+<hr style="border:2px solid gray"> </hr>
+
+## Docker:
+
+
+Download the docker-compose file.
+
+> curl -LJO https://raw.githubusercontent.com/Netmonster/crypto-whale-watching-app-docker/master/docker-compose.yaml
+
+Docker compose
+
+> docker-compose up -d
+
+Open a browser and open the following url:
+
+> localhost:8050
+
+## Standalone:
+
+
 The present version tracks all major pairings (ETH/USD; ETH/BTC; BTC/USD; LTC/USD) but I can add more upon request. It is set to update every 5 seconds (to optimize load-time) but this can be changed easily in the code if you want to make the refreshes faster / slower. There are also buttons that allow the user to pause the automatic refresh ("Freeze all" / "Unfreeze all"), and hide any of the currency pairings that they do not wish to see displayed. The refresh-pausing functionality allows the user to preserve any zoom or limitation that they have selected via the Plotly viz. 
 
 The size of each observation is determined algorithmically using a transformation of the square root of the volume of all orders at that particular price-point calibrated so that the bubbles never become unreasonably large or small. The color-coding allows for easy identification of whales, as described in the section above. 
@@ -74,6 +94,8 @@ Once its finished type:
 > python app.py
 
 Then open up your browser and type in the set of numbers that pop up in terminal, which should look similar to "127.0.0.1:8050".
+
+<hr style="border:2px solid gray"> </hr>
 
 ## Support Needed
 
