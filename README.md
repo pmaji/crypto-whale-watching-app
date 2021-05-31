@@ -1,3 +1,5 @@
+[![Docker Build](https://github.com/Netmonster/crypto-whale-watching-app-docker/actions/workflows/docker_ci.yml/badge.svg)](https://github.com/Netmonster/crypto-whale-watching-app-docker/actions/workflows/docker_ci.yml)
+
 ## Introduction
 
 Welcome! This is a Python-based Dash app meant to track whale activity in buy / sell walls on crypto-currency exchanges (presently just operational for GDAX, but more exchanges to come). This document aims to explain the purpose, functionality, and future of this project. Please do share this with your fellow coders / traders / crypto-aficionados, and contribute to the future of this project by calling out issues, requesting new features, and submitting pull requests to improve the app.
