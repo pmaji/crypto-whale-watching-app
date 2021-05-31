@@ -66,7 +66,7 @@ We cannot be as certain that ladder price-point whales are, in fact, individual 
 
 Download the docker-compose file.
 
-> curl -LJO https://raw.githubusercontent.com/Netmonster/crypto-whale-watching-app-docker/master/docker-compose.yml
+> curl -LJO https://raw.githubusercontent.com/Netmonster/crypto-whale-watching-app-docker/master/docker-compose.yaml
 
 Docker compose
 
