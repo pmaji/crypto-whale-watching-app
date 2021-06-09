@@ -363,10 +363,6 @@ static_content_before = [
         "If annotations overlap or bubbles cluster, click 'Freeze all' and then zoom in on the area of interest.", html.Br(),
         "See GitHub link above for further details."
         ])
-
-     html.P([
-        "Ya See Me???"
-        ])
 ]
 cCache = []
 for pair in PAIRS:
