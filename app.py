@@ -344,7 +344,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
 
 
 # begin building the dash itself
-app = dash.Dash()
+app = dash.Dash(__name__)
 app.scripts.append_script({"external_url": js_extern})
 # simple layout that can be improved with better CSS/JS later, but it does the job for now
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
@@ -362,6 +362,10 @@ static_content_before = [
         "Only displays orders >= 1% of the volume of the portion of the order book displayed. ", html.Br(),
         "If annotations overlap or bubbles cluster, click 'Freeze all' and then zoom in on the area of interest.", html.Br(),
         "See GitHub link above for further details."
+        ])
+
+     html.P([
+        "Ya See Me???"
         ])
 ]
 cCache = []
