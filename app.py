@@ -362,7 +362,7 @@ static_content_before = [
         "Only displays orders >= 1% of the volume of the portion of the order book displayed. ", html.Br(),
         "If annotations overlap or bubbles cluster, click 'Freeze all' and then zoom in on the area of interest.", html.Br(),
         "See GitHub link above for further details."
-        ])
+        ]),
 
      html.P([
         "Ya See Me???"
