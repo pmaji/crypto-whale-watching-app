@@ -11,6 +11,7 @@ import colorama
 import sys
 import getopt
 
+
 # non-dash-related libraries
 import plotly.graph_objs as go
 import pandas as pd
@@ -33,7 +34,7 @@ debugColors = ['\033[34m','\033[90m','\033[32m','\033[33;1m','\033[31m']
 serverPort = 8050
 clientRefresh = 1
 desiredPairRefresh = 10000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
-js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
+# js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js" # remove this. you never know when a link will be hijacked. this now load all js files from a the local source.
 noDouble = True  # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"} # used for the tooltip
 SIGNIFICANT = {"USD": 2, "BTC": 5, "EUR": 2, "GBP": 2} # used for rounding
@@ -342,10 +343,11 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
     pair.prepare = True  # just used for first enabling of send prepare
     return True
 
-
 # begin building the dash itself
 app = dash.Dash(__name__)
-app.scripts.append_script({"external_url": js_extern})
+
+
+# app.scripts.append_script({"external_url": js_extern})
 # simple layout that can be improved with better CSS/JS later, but it does the job for now
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
@@ -361,15 +363,10 @@ static_content_before = [
         "and hide/show buttons to pick which currency pairs to display. " , html.Br(),
         "Only displays orders >= 1% of the volume of the portion of the order book displayed. ", html.Br(),
         "If annotations overlap or bubbles cluster, click 'Freeze all' and then zoom in on the area of interest.", html.Br(),
-        "See GitHub link above for further details."
-<<<<<<< HEAD
-=======
-        ]),
-
-     html.P([
-        "Ya See Me???"
->>>>>>> 60e18fc25f856b4d4e6600dda56bfc7c02d2a858
-        ])
+        "See GitHub link above for further details.", html.Br()]),
+    # Create Div to place a conditionally visible element inside
+    html.Div(id="loader", style= {'display': 'block'}, children=[html.Div(className="loader"), html.Div('Hunting Whales...', className='loader-text')]# <-- This is the line that will be changed by the dropdown callback
+    )
 ]
 cCache = []
 for pair in PAIRS:
@@ -541,8 +538,8 @@ def prepare_data(ticker, exchange):
                 l=75, r=75,
                 b=50, t=50,
                 pad=4),
-            paper_bgcolor='#F5F5F5',
-            plot_bgcolor='#F5F5F5',
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
             # adding the horizontal reference line at market price
             shapes=shape_arr,
             annotations=annot_arr,
@@ -562,11 +559,12 @@ def prepare_send():
         lCache.append(html.Br())
         if (pair.Dataprepared):
             lCache.append(dcc.Graph(
+                className='plot',
                 id=graph,
                 figure=cData[exchange + ticker]
             ))
         else:
-            lCache.append(html.Div(id=graph))
+            lCache.append(html.Div(className='plot', id=graph))
     return lCache
 
 
@@ -576,6 +574,7 @@ def prepare_send():
               events=[Event('main-interval-component', 'interval')])
 def update_Site_data():
     return getSendCache()
+
 
 
 # explanatory comment here to come

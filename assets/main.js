@@ -5,6 +5,32 @@ var iCBlind;
 var bFreeze=false;
 
 var iInit=setInterval(init,50);
+
+
+let loading = setInterval(toggleLoading, 50);
+
+function toggleLoading() {
+
+	var aGraph=$('div[id*="live-graph"]');
+
+	if(aGraph.length > 0)
+	{
+		// get the first chart and look for a child node.
+		var parent = aGraph[0];
+		var hasChild = parent.children.length > 0;
+		// get the loading div
+		if(hasChild)
+		{
+			var elem = $('#loader')[0];
+			if(elem.style.display=="block") {
+				console.log("Hiding loading menu");
+				elem.style.display="none";
+				clearInterval(loading);
+			}
+		}
+	}
+}
+
 function init(){
 	if(!window.jQuery){
 		console.log("jQuery not loaded yet");
@@ -71,8 +97,10 @@ function colorblind(i,ob){
 		}
 	}
 }
+
 function addSidebar(){
 	$('body').append('<div id="sidebarCon" style="position:fixed;left:0;top:0;bottom:0;width:150px;height=100%; border-right-style: solid;"></div>');
+	$('div#sidebarCon').eq(0).append('<header><h3>Theme</h3> <form id="theme-switcher"> <div> <input checked type="radio" id="auto" name="theme" value="auto"> <label for="auto">Auto</label> </div> <div> <input type="radio" id="light" name="theme" value="light"> <label for="light">Light</label> </div> <div> <input type="radio" id="dark" name="theme" value="dark"> <label for="dark">Dark</label> </div> <div> <input type="radio" id="dim" name="theme" value="dim"> <label for="dim">Dim</label> </div> </form> </header></br></br>');
 	$('div#sidebarCon').eq(0).append('<div id="sidebar">');
 	var sideB=$('div#sidebar').eq(0);
 	var cStyle = $('div#react-entry-point').eq(0).attr('style');
@@ -93,16 +121,29 @@ function addSidebar(){
 		sideB.append(sElem)
 	}
 }
+
 function toggleGraph(pName){
-	var elem =$('[id*="'+pName+'"')[0]
-	if(elem.style.display=="none"){elem.style.display="block"}
-	else{elem.style.display="none"}
+	var elem =$('[id*="'+pName+'"')[0];
+
+	if(elem.style.display=="none") {
+		elem.style.display="block"
+	}
+	else {
+		elem.style.display="none"
+	}
 }
+
 function getGraphs(){
 	var aGraph=$('div[id*="live-graph"]');
 	var aPairs=[];
+
 	for( var i=0;i<aGraph.length;i++){
 		aPairs.push(aGraph[i].id.split("live-graph-")[1]);
 	}
 	return aPairs;
 }
+
+function toggle_loading() {
+
+}
+
