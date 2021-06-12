@@ -3,7 +3,6 @@ version: '3'
 services:
     web:
         tty: true
-        #image: netmonster/crypto-whale-watching-app-docker:latest
-        image: myimage
+        image: netmonster/crypto-whale-watching-app-docker:latest
         ports:
             - "8050:8050"
