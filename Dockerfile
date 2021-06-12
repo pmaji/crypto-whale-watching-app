@@ -18,19 +18,17 @@ RUN apt-get update && \
 # make active dir for git install
 WORKDIR $VIRTUAL_ENV
 
-# clone pmaji/crypto-whale-watching-app repo
-#RUN git clone --branch feature/css https://github.com/Netmonster/crypto-whale-watching-app-docker crypto-whale-watching-app
-# https://github.com/pmaji/crypto-whale-watching-app.git
-
 # Dev stuff
 RUN mkdir ${VIRTUAL_ENV}/crypto-whale-watching-app
 
 # set new working dir to 
 WORKDIR ${VIRTUAL_ENV}/crypto-whale-watching-app
 
-# install dependencies:
 
+# Add files from the repo to the docker container.
 ADD . ${VIRTUAL_ENV}/crypto-whale-watching-app/
+
+# install dependencies:
 RUN pip install -r requirements.txt
 
 # run the application:
