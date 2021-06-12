@@ -100,7 +100,7 @@ function colorblind(i,ob){
 
 function addSidebar(){
 	$('body').append('<div id="sidebarCon" style="position:fixed;left:0;top:0;bottom:0;width:150px;height=100%; border-right-style: solid;"></div>');
-	$('div#sidebarCon').eq(0).append('<header><h3>Theme</h3> <form id="theme-switcher"> <div> <input checked type="radio" id="auto" name="theme" value="auto"> <label for="auto">Auto</label> </div> <div> <input type="radio" id="light" name="theme" value="light"> <label for="light">Light</label> </div> <div> <input type="radio" id="dark" name="theme" value="dark"> <label for="dark">Dark</label> </div> <div> <input type="radio" id="dim" name="theme" value="dim"> <label for="dim">Dim</label> </div> </form> </header></br></br>');
+	$('div#sidebarCon').eq(0).append('<header><h3>Theme</h3> <form id="theme-switcher"> <div> <input type="radio" id="light" name="theme" value="light"> <label for="light">Light</label> </div> <div> <input type="radio" id="dark" name="theme" value="dark"> <label for="dark">Dark</label> </div> <div> <input type="radio" id="dim" name="theme" value="dim"> <label for="dim">Dim</label> </div> </form> </header></br></br>');
 	$('div#sidebarCon').eq(0).append('<div id="sidebar">');
 	var sideB=$('div#sidebar').eq(0);
 	var cStyle = $('div#react-entry-point').eq(0).attr('style');
@@ -142,8 +142,3 @@ function getGraphs(){
 	}
 	return aPairs;
 }
-
-function toggle_loading() {
-
-}
-

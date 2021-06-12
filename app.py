@@ -364,7 +364,7 @@ static_content_before = [
         "Only displays orders >= 1% of the volume of the portion of the order book displayed. ", html.Br(),
         "If annotations overlap or bubbles cluster, click 'Freeze all' and then zoom in on the area of interest.", html.Br(),
         "See GitHub link above for further details.", html.Br()]),
-    # Create Div to place a conditionally visible element inside
+    # Create Div to place a conditionally visible loading animation.
     html.Div(id="loader", style= {'display': 'block'}, children=[html.Div(className="loader"), html.Div('Hunting Whales...', className='loader-text')]# <-- This is the line that will be changed by the dropdown callback
     )
 ]
@@ -538,8 +538,8 @@ def prepare_data(ticker, exchange):
                 l=75, r=75,
                 b=50, t=50,
                 pad=4),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)', # set bg to be transparent, works with themes.
+            plot_bgcolor='rgba(0,0,0,0)',  # set bg to be transparent, works with themes.
             # adding the horizontal reference line at market price
             shapes=shape_arr,
             annotations=annot_arr,
@@ -574,8 +574,6 @@ def prepare_send():
               events=[Event('main-interval-component', 'interval')])
 def update_Site_data():
     return getSendCache()
-
-
 
 # explanatory comment here to come
 def round_sig(x, sig=3, overwrite=0, minimum=0):
