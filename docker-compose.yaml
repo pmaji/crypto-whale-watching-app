@@ -4,5 +4,7 @@ services:
     web:
         tty: true
         image: netmonster/crypto-whale-watching-app-docker:latest
+        volumes: 
+            - ./trading_pairs.txt:/opt/crypto_app/crypto-whale-watching-app/trading_pairs.txt
         ports:
             - "8050:8050"

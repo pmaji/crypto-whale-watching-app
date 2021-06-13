@@ -85,13 +85,22 @@ class Pair:
         self.websocket = False
         self.combined = pExchange + pTicker
 
+def log(pLevel, pMessage):
+    if pLevel >= debugLevel:
+        text = (str(datetime.now()) + " [" +
+            debugLevels[pLevel] +
+            "]: " + str(pMessage))
+        open("log.txt","a").write(text + "\n")
+        print(debugColors[pLevel] + text + '\033[0m')
+
+def get_ticker_list():
+    with open("trading_pairs.txt") as f:
+        the_list = sorted(word.strip(",") for line in f for word in line.split())
+        log(2, the_list)
+    return the_list
 
 PAIRS = []  # Array containing all pairs
-E_GDAX = Exchange("GDAX", [
-                           "ETH-USD", "ETH-EUR", "ETH-BTC",
-                           "BTC-USD", "BTC-EUR", "BTC-GBP",
-                           "LTC-USD", "LTC-EUR", "LTC-BTC",
-                           "BCH-USD", "BCH-EUR", "BCH-BTC"], 0)
+E_GDAX = Exchange("GDAX", get_ticker_list(),0) # get tickers from trading_pairs.txt file.
 for ticker in E_GDAX.ticker:
     cObj = Pair(E_GDAX.name, ticker)
     PAIRS.append(cObj)
@@ -773,13 +782,7 @@ def handleArgs(argv):
     log(1,'Web Interface Port is ' + str(serverPort))
     log(1,'Debug Level is ' + str(debugLevel))
 
-def log(pLevel, pMessage):
-    if pLevel >= debugLevel:
-        text = (str(datetime.now()) + " [" +
-            debugLevels[pLevel] +
-            "]: " + str(pMessage))
-        open("log.txt","a").write(text + "\n")
-        print(debugColors[pLevel] + text + '\033[0m')
+
 
 if __name__ == '__main__':
     # Initial Load of Data
