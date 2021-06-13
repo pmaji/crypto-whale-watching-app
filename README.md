@@ -2,7 +2,16 @@
 
 # New Features
 
-Added Theme Selector:
+## Easy way to add tickers:
+
+You can now add pairs you would like to use on your own. There is now a file called trading_pairs.txt. Simply locate the pair you want to use and add it as a new line.
+
+Example: You can use the <a href="https://help.coinbase.com/en/pro/trading-and-funding/cryptocurrency-trading-pairs/locations-and-trading-pairs">GDAX Pairs</a> list to locate the pairs you wish to use. <i>Example: DOGE/USD. Note: The / (Slash) would be replaced with a - (Dash).</i>
+
+>  DOGE-USD
+
+
+## Added Theme Selector:
 
 <img src="https://raw.githubusercontent.com/netmonster/crypto-whale-watching-app-docker/master/screenshots/theme_selector.jpg" width="174" height="234">
 
@@ -74,12 +83,16 @@ We cannot be as certain that ladder price-point whales are, in fact, individual 
 
 <hr style="border:2px solid gray"> </hr>
 
-## Docker:
+## Docker Install:
 
 
-Download the docker-compose file.
+Download the docker-compose file and the rading_pairs.txt file.
 
+Docker Compose file
 > curl -LJO https://raw.githubusercontent.com/Netmonster/crypto-whale-watching-app-docker/master/docker-compose.yaml
+
+Trading Pairs File
+> curl -LJO https://raw.githubusercontent.com/Netmonster/crypto-whale-watching-app-docker/master/trading_pairs.txt
 
 Docker compose
 
@@ -89,7 +102,7 @@ Open a browser and open the following url:
 
 > localhost:8050
 
-## Standalone:
+## Standalone Install:
 
 
 The present version tracks all major pairings (ETH/USD; ETH/BTC; BTC/USD; LTC/USD) you can add more by updating the trading_pairs.txt file and restarting the app. It is set to update every 5 seconds (to optimize load-time) but this can be changed easily in the code if you want to make the refreshes faster / slower. There are also buttons that allow the user to pause the automatic refresh ("Freeze all" / "Unfreeze all"), and hide any of the currency pairings that they do not wish to see displayed. The refresh-pausing functionality allows the user to preserve any zoom or limitation that they have selected via the Plotly viz. 
