@@ -147,7 +147,21 @@
     justify-content: center;
     gap: 10vmax 10vmin;
   }
-  
+
+  #sidebarCon {
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    width:250px;
+    height:100%;
+    border-right-style: solid;
+  }
+
+  .checkboxes label{
+    margin: 0px 20px 0px 3px;
+  }
+
   section {
     display: grid;
     gap: 2.5vh;

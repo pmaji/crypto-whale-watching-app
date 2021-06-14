@@ -3,6 +3,7 @@ version: '3'
 services:
     web:
         tty: true
+        container_name: crypto-whale-watching-app
         image: netmonster/crypto-whale-watching-app-docker:latest
         volumes: 
             - ./trading_pairs.txt:/opt/crypto_app/crypto-whale-watching-app/trading_pairs.txt
