@@ -22,7 +22,7 @@ jsonschema==2.6.0
 jupyter-core==4.4.0
 MarkupSafe==1.0
 nbformat==4.4.0
-numpy==1.16.2
+numpy==1.22.0
 pandas==0.24.2
 plotly==2.7.0
 pymongo==3.5.1
