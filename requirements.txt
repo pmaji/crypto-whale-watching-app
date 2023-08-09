@@ -11,7 +11,7 @@ dash-renderer==0.15.0
 dash-table==3.6.0
 DateTime==4.3
 decorator==4.2.1
-Flask==1.0.2
+Flask==2.3.2
 Flask-Compress==1.4.0
 gdax==1.0.6
 idna==2.6
