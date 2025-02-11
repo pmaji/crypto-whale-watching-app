@@ -17,7 +17,7 @@ gdax==1.0.6
 idna==2.6
 ipython-genutils==0.2.0
 itsdangerous==0.24
-Jinja2==2.11.3
+Jinja2==3.1.5
 jsonschema==2.6.0
 jupyter-core==4.11.2
 MarkupSafe==1.0
